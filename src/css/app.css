@@ -1,0 +1,72 @@
+.bgr-color {
+  background: #ffffff;
+}
+.list-container {
+  background: rgba(244, 245, 246, 1);
+}
+.section-container {
+  padding: 16px;
+  background: #ffffff;
+}
+.grey-container {
+  padding: 16px;
+  background: #cbc8c8;
+}
+
+.zaui-list-item {
+  cursor: pointer;
+}
+.slide-transition {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.status {
+  height: 30px;
+  /* width: 18%; */
+  border-radius: 24px;
+  /* background: rgb(246, 231, 231); */
+}
+.floatingBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+}
+.choose-image {
+  width: 35%;
+  background: rgba(233, 235, 237, 1);
+  border-radius: 16px;
+}
+.comment-container {
+  background: rgba(244, 245, 246, 1);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.test {
+  background: rgb(244, 241, 229);
+}
+
+.two-line-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Số dòng tối đa muốn hiển thị */
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+  text-overflow: ellipsis; /* Hiển thị dấu "..." nếu văn bản vượt quá 2 dòng */
+}
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+}

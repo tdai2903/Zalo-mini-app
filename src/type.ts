@@ -1,5 +1,8 @@
+
+
 export type TicketType = {
   title: string;
+  category:string;
   ticket_no: string;
   createdtime: string;
   ticketcategories: string;
@@ -13,14 +16,18 @@ export type TicketType = {
   helpdesk_over_sla_reason:string;
   ticketid: string;
   starred: string;
+  helpdesk_rating:string;
   ticketstatus:string;
   record_id: string;
+  contact_id: string;
   customer:string;
-  phone:string;
-  email:string;
+  contact_name:string;
+  contact_email:string;
   description: string;
   contact_mobile:string;
-  url: string;
+  imagename: string;
+  imagename_path: TicketType[];
+  filename:TicketType[];
 }
 
 export type NewsType={
@@ -43,4 +50,23 @@ export type CommentType= {
   related_to: string;
   commentcontent: string;
   modcommentsid: string;
+  parent_comments: string;
+  createdtime: string;
+  assigned_owners: Array<CommentType>;
+  name:string;
+  userid:string;
+  id: string;
+}
+
+export type RatingType = {
+  helpdesk_rating: number;
+  rating_description: string;
+}
+
+export type ContactType = {
+  firstname:string;
+  lastname:string;
+  mobile:string;
+  email: string;
+  zalo_id_miniapp: string;
 }

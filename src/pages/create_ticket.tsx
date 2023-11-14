@@ -1,11 +1,14 @@
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import {
   configAppView,
-  getUserInfo,
+  requestCameraPermission,
+  setNavigationBarLeftButton,
   onConfirmToExit,
   offConfirmToExit,
   closeApp,
+  chooseImage,
 } from "zmp-sdk/apis";
 import {
   Text,
@@ -21,6 +24,7 @@ import {
   useSnackbar,
 } from "zmp-ui";
 import { TicketType } from "../type";
+import url_api from "../service";
 const initialTicketState: TicketType = {
   ticket_title: "",
   ticketpriorities: "",
@@ -28,9 +32,9 @@ const initialTicketState: TicketType = {
   ticketstatus: "",
   id: "",
   status: "",
-  contact_mobile: "",
   comments: "",
   helpdesk_over_sla_reason: "",
+  helpdesk_rating: "",
   related_cpslacategory: "",
   record_id: "",
   ticketid: "",
@@ -38,397 +42,690 @@ const initialTicketState: TicketType = {
   createdtime: "",
   ticket_no: "",
   title: "",
-  url: "",
+  category: "",
+  imagename_path: [],
+  filename: [],
+  imagename: "",
   customer: "",
-  email: "",
-  phone: "",
+  contact_email: "",
+  contact_id: "",
+  contact_name: "",
+  contact_mobile: "",
   description: "",
   helpdesk_subcategory: "",
 };
-const CreateTicketPage = () => {
+const CreateTicketPage = ({ onReturnHome }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { state } = location;
+  // const request = require("request");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const contactData = JSON.parse(localStorage.getItem("contact") || "{}");
+  const Detail = JSON.parse(localStorage.getItem("detail_ticket") || "{}");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const { openSnackbar } = useSnackbar();
   const [selectedCategory, setSelectedCategory] = useState("");
   const token = localStorage.getItem("token");
-  const [apiCalled, setApiCalled] = useState(false);
+  const [subcategoryOptions, setSubcategoryOptions] = useState([]);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [modalConfirmTicket, setModalConfirmTicket] = useState(false);
+  const [isLinkSettingVisible, setIsLinkSettingVisible] = useState(true);
+  const [isFieldsFilled, setIsFieldsFilled] = useState(false);
+  const [inputDescription, setInputDescription] = useState("");
+  const [inputLinkSetting, setInputLinkSetting] = useState("");
   const [newTicket, setNewTicket] = React.useState<TicketType>({
     ...initialTicketState,
-  });
-  const [userInfo, setUserInfo] = useState({
-    id: "",
-    name: "",
-    avatar: "",
   });
   const [isFormInvalid, setIsFormInvalid] = useState(false);
   const [errorMessages, setErrorMessages] = useState({
     ticket_title: "",
-    // customer: "",
     description: "",
   });
+
   const [visible, setVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-
   function convertFilesToImageTypes(files: File[]) {
     return files.map((file) => ({ src: URL.createObjectURL(file) }));
   }
-
   const isImage = (file: File) => {
     return file.type.startsWith("image/");
   };
-
   const images = uploadedFiles.filter((file) => isImage(file));
   const files = uploadedFiles.filter((file) => !isImage(file));
-
   const imagesForViewer = convertFilesToImageTypes(images);
-
-  const Notifications = async () => {
-    const apiKey = "EjgGGiuGQcGntOz3n1LhOYpVYK_S4MLlATc2J34tnllK5CqHT6G";
-    const receiverId = "6304414410641560859";
-    const miniAppId = "3077214972070612317";
-
-    const url = "https://openapi.mini.zalo.me/notification/template";
-
-    const data = {
-      templateId: "00126fd75392bacce383",
-      templateData: {
-        buttonText: "Xem chi tiết đơn hàng",
-        buttonUrl: "https://zalo.me/s/194839900003483517/",
-        title: "CloudGO Ticket - Tạo mới ticket",
-        contentTitle: "Thông báo ghi nhận ticket",
-        contentDescription:
-          "Cảm ơn quý khách đã tin tưởng. Chúng tôi đã ghi nhận ticket của bạn và tiến hành xử lý",
-      },
-    };
-
-    const headers = {
-      "X-Api-Key": `Bearer ${apiKey}`,
-      "X-User-Id": receiverId,
-      "X-MiniApp-Id": miniAppId,
-      "Content-Type": "application/json",
-    };
-
-    axios
-      .post(url, data, { headers })
-      .then((response) => {
-        console.log(response.data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+  const returnHome = () => {
+    onReturnHome();
   };
+
+  const {
+    ticket_title,
+    ticketcategories,
+    helpdesk_subcategory,
+    contact_name,
+    contact_mobile,
+    contact_email,
+    description,
+    imagename_path,
+  } = state ?? {};
+
+  const text = Detail.data.description;
+  const newText = text
+    .split(/<br \/>|\\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
 
   const configView = async () => {
     try {
       await configAppView({
-        headerColor: "#1843EF",
+        headerColor: "#006AF5",
         headerTextColor: "white",
         hideAndroidBottomNavigationBar: true,
         hideIOSSafeAreaBottom: true,
         actionBar: {
           title: "Tạo Ticket",
-          leftButton: "back",
+          leftButton: "none",
         },
       });
+      console.log("hủy btn back");
     } catch (error) {}
   };
 
+  setNavigationBarLeftButton({
+    type: "none",
+    success: (res) => {
+      // xử lý khi gọi api thành công
+    },
+    fail: (error) => {
+      // xử lý khi gọi api thất bại
+      console.log(error);
+    },
+  });
+  // const Notifications = async () => {
+  //   const request = require("request");
+  //   const apiKey = "2j5lEkY6N6mFqt4yxurVOn7QT3tvX55Z4TjuDJ4nq6OTP-k7Gcy";
+  //   const receiverId = contactData.data.zalo_id_miniapp;
+  //   const miniAppId = "3077214972070612317";
+
+  //   const url = "https://openapi.mini.zalo.me/notification/template";
+
+  //   const data = {
+  //     templateId: "00126fd75392bacce383",
+  //     templateData: {
+  //       buttonText: "Xem chi tiết ticket",
+  //       buttonUrl: "https://zalo.me/s/3077214972070612317/",
+  //       title: "Tạo mới ticket",
+  //       contentTitle: "Thông báo ghi nhận ticket",
+  //       contentDescription:
+  //         "Cảm ơn quý khách đã tin tưởng. Chúng tôi đã ghi nhận ticket của bạn và tiến hành xử lý",
+  //     },
+  //   };
+
+  //   const headers = {
+  //     "X-Api-Key": `Bearer ${apiKey}`,
+  //     "X-User-Id": receiverId,
+  //     "X-MiniApp-Id": miniAppId,
+  //     "Content-Type": "application/json",
+  //   };
+
+  //   request.post({ url, json: data, headers }, (error, response, body) => {
+  //     if (error) {
+  //       console.error(error);
+  //     } else {
+  //       console.log(body);
+  //     }
+  //   });
+  // };
+
   useEffect(() => {
-    if (!apiCalled) {
-      getUserInfo({
-        success: (data) => {
-          const Info = data;
-          console.log(data, "Get User Info Success");
-          setUserInfo(Info.userInfo);
-        },
-        fail: (error) => {
-          console.log(error);
-        },
-      });
+    configView();
+    onConfirmToExit(() => setConfirmModalVisible(true));
+    return () => offConfirmToExit();
+  }, [confirmModalVisible]);
+
+  const requestCamera = async () => {
+    try {
+      const { userAllow, message } = await requestCameraPermission({});
+      if (userAllow) {
+        // được phép sử dụng camera
+      }
+      console.log("requestCamera");
+    } catch (error) {
+      // xử lý khi gọi api thất bại
+      console.log(error);
     }
-  }, [apiCalled]);
+  };
+
+  // const handleChooseImage = async () => {
+  //   try {
+  //     const { filePaths, tempFiles } = await chooseImage({
+  //       sourceType: ["camera"],
+  //       cameraType: "front",
+  //     });
+  //   } catch (error) {
+  //     // xử lý khi gọi api thất bại
+  //     console.log(error);
+  //   }
+  // };
 
   const createNewTicket = async () => {
     try {
-      if (
-        !newTicket.ticket_title ||
-        // !newTicket.customer ||
-        !newTicket.description
-      ) {
+      if (state) {
+        openSnackbar({
+          text: "Đang nhân đôi ticket...",
+          type: "loading",
+          duration: 10000,
+        });
+      } else {
+        openSnackbar({
+          text: "Đang tạo ticket...",
+          type: "loading",
+          duration: 10000,
+        });
+      }
+
+      if (!newTicket.ticket_title || !newTicket.description) {
         setErrorMessages({
           ticket_title: !newTicket.ticket_title ? "Vui lòng nhập tiêu đề." : "",
-          // customer: !newTicket.customer ? "Vui lòng nhập link cài đặt." : "",
           description: !newTicket.description ? "Vui lòng nhập mô tả." : "",
         });
         setIsFormInvalid(true);
         return;
       }
+
+      // const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+      // const isEmailValid = emailRegex.test(newTicket.contact_email);
+
       setErrorMessages({
         ticket_title: "",
-        // customer: "",
         description: "",
       });
       setIsFormInvalid(false);
+      const formData = new FormData();
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      if (token !== null) {
-        headers["token"] = token;
+      // Thêm các trường thông tin vào FormData
+      formData.append("RequestAction", "SaveTicket");
+      formData.append("Data[ticket_title]", newTicket.ticket_title);
+      formData.append("Data[ticketpriorities]", "Normal");
+      formData.append("Data[ticketstatus]", "Open");
+      formData.append("Data[assigned_user_id]", "Users:1,Users:1");
+      formData.append("Data[helpdesk_customer_type]", "Existing Customer");
+      formData.append("Data[ticketcategories]", newTicket.ticketcategories);
+      formData.append("Data[description]", newTicket.description);
+      formData.append(
+        "Data[helpdesk_subcategory]",
+        newTicket.helpdesk_subcategory
+      );
+      formData.append("Data[contact_name]", newTicket.contact_name);
+      formData.append("Data[contact_mobile]", newTicket.contact_mobile);
+      formData.append("Data[contact_id]", contactData.data.id);
+      formData.append("Data[contact_email]", newTicket.contact_email);
+      // formData.append("filename", newTicket.filename[0]);
+      // console.log("gghgjg", newTicket.filename[0]);
+      for (let i = 0; i < newTicket.filename.length; i++) {
+        formData.append(`file_${i}`, newTicket.filename[i]);
       }
-      let data = JSON.stringify({
-        RequestAction: "SaveTicket",
-        Data: {
-          ticket_title: newTicket.ticket_title,
-          ticketpriorities: "Normal",
-          ticketstatus: "Open",
-          ticketcategories: newTicket.ticketcategories,
-          description: newTicket.description,
-          helpdesk_subcategory: newTicket.helpdesk_subcategory,
-        },
-      });
+
+      formData.append("IsMultiPartData", "1");
 
       let config = {
         method: "post",
         maxBodyLength: Infinity,
-        url: "https://pms-dev.cloudpro.vn/api/SalesAppApi.php",
-        headers: headers,
-        data: data,
+        url: url_api,
+        headers: {
+          "Content-Type": "multipart/form-data",
+          token: token,
+        },
+        data: formData,
       };
 
       axios
         .request(config)
         .then((response) => {
-          console.log(JSON.stringify(response.data));
+          const createticket = JSON.stringify(response.data.data);
+          console.log("đã tạo ticket thành công", createticket);
           setNewTicket({ ...initialTicketState });
-          Notifications;
-          openSnackbar({
-            text: "Đã tạo ticket thành công",
-            type: "success",
-          });
-          navigate(`/main`);
+          if (state) {
+            openSnackbar({
+              text: "Đã nhân đôi ticket thành công",
+              type: "success",
+            });
+            navigate("/main");
+          } else {
+            openSnackbar({
+              text: "Đã tạo ticket thành công",
+              type: "success",
+            });
+            returnHome();
+          }
         })
         .catch((error) => {
           console.log(error);
         });
     } catch (error) {
       if (error === "SyntaxError: Unexpected token T in JSON at position 0") {
-        navigate("/");
+        // Xử lý lỗi
       } else {
         console.error(error);
       }
     }
   };
 
+  useEffect(() => {
+    const { ticket_title, description, ticketcategories } = newTicket;
+    const isAllFieldsFilled = ticket_title && description && ticketcategories;
+
+    setIsFieldsFilled(isAllFieldsFilled);
+  }, [newTicket]);
+
+  const handleLinkSettingChange = (e) => {
+    const linkSettingValue = e.target.value;
+    setInputLinkSetting(linkSettingValue);
+    // Cập nhật trường description dựa trên giá trị nhập vào từ Input Link Setting
+    const combinedDescription = linkSettingValue
+      ? `${linkSettingValue}\n${inputDescription}`
+      : inputDescription;
+    setNewTicket((prevTicket) => ({
+      ...prevTicket,
+      description: combinedDescription,
+    }));
+  };
+
+  const handleDescriptionChange = (e) => {
+    const descriptionValue = e.target.value;
+    setInputDescription(descriptionValue);
+    // Cập nhật trường description dựa trên giá trị nhập vào từ TextArea
+    const combinedDescription = `${inputLinkSetting}\n${descriptionValue}`;
+    setNewTicket((prevTicket) => ({
+      ...prevTicket,
+      description: combinedDescription,
+    }));
+  };
+
+  const maxFiles = 6;
+  const maxFileSizeInBytes = 15 * 1024 * 1024;
   const handleImageUpload = (files: FileList | null) => {
     if (files) {
       const selectedImagesArray = Array.from(files);
-      setSelectedImages((prevSelectedImages) => [
-        ...prevSelectedImages,
-        ...selectedImagesArray,
-      ]);
+      console.log(files);
+      // Kiểm tra kích thước của từng tệp trước khi thêm vào danh sách
+      const filesWithinSizeLimit = selectedImagesArray.every(
+        (file) => file.size <= maxFileSizeInBytes
+      );
 
-      setUploadedFiles((prevUploadedFiles) => [
-        ...prevUploadedFiles,
-        ...selectedImagesArray,
-      ]);
+      if (!filesWithinSizeLimit) {
+        // Hiển thị thông báo hoặc xử lý khi một hoặc nhiều tệp vượt quá kích thước giới hạn
+        openSnackbar({
+          text: `Kích thước tệp vượt quá giới hạn 15MB.`,
+          type: "error",
+        });
+        return;
+      }
 
-      const storedImages = localStorage.getItem("selectedImages");
-      const updatedImages = storedImages
-        ? [...JSON.parse(storedImages), ...selectedImagesArray]
-        : selectedImagesArray;
-      localStorage.setItem("selectedImages", JSON.stringify(updatedImages));
+      // Kiểm tra số lượng hình ảnh đã chọn
+      if (selectedImagesArray.length + newTicket.filename.length <= maxFiles) {
+        // Cập nhật danh sách hình ảnh đã chọn
+        setSelectedImages((prevSelectedImages) => [
+          ...prevSelectedImages,
+          ...selectedImagesArray,
+        ]);
+
+        setUploadedFiles((prevUploadedFiles) => [
+          ...prevUploadedFiles,
+          ...selectedImagesArray,
+        ]);
+
+        setNewTicket((prevTicket) => ({
+          ...prevTicket,
+          filename: files,
+        }));
+      } else {
+        // Hiển thị thông báo hoặc xử lý khi vượt quá giới hạn tệp
+        openSnackbar({
+          text: `Chỉ được tải lên tối đa ${maxFiles} hình ảnh và tệp.`,
+          type: "error",
+        });
+      }
+    }
+  };
+
+  const handleDeleteImage = (index) => {
+    const updatedImages = [...selectedImages];
+    updatedImages.splice(index, 1);
+    setSelectedImages(updatedImages);
+
+    const updatedUploadedFiles = [...uploadedFiles];
+    updatedUploadedFiles.splice(index, 1);
+    setUploadedFiles(updatedUploadedFiles);
+
+    const updatedImagePaths = updatedImages.map((file) =>
+      URL.createObjectURL(file)
+    );
+    setNewTicket((prevTicket) => ({
+      ...prevTicket,
+      filename: updatedImagePaths,
+    }));
+
+    // Đóng hình ảnh khi người dùng xóa
+    setVisible(false);
+
+    if (index === activeIndex) {
+      setActiveIndex(0);
     }
   };
 
   const handleIconClick = () => {
+    requestCamera();
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
+  const categoryToSubcategoryMapping = {
+    Bug: [
+      "customer",
+      "product",
+      "campaign_mktlist",
+      "potential_quote_salesorder_invoice",
+      "receipt_payment",
+      "dashboard_report",
+      "zalochat_chatbot",
+      "filter_search",
+      "calendar_task_project",
+      "callcenter",
+      "email_sms_zns",
+      "ticket_faq",
+      "admin",
+      "other",
+    ],
+    Feedback: [
+      "request_feature",
+      "request_consulting",
+      "staff_feedback",
+      "application_performance",
+      "uiux",
+      "other",
+    ],
+  };
+
+  const updateSubcategories = () => {
+    const selectedCategory = newTicket.ticketcategories;
+    const subcategories = categoryToSubcategoryMapping[selectedCategory] || [];
+
+    setSubcategoryOptions(subcategories);
+
+    setNewTicket((prevTicket) => ({
+      ...prevTicket,
+      helpdesk_subcategory: subcategories[0] || "",
+    }));
+  };
+
   const handleCategoryChange = (value) => {
     setSelectedCategory(value);
+    // Cập nhật biến isLinkSettingVisible
+    setIsLinkSettingVisible(value === "Bug");
+    // Cập nhật danh mục trong state newTicket
+    setNewTicket((prevTicket) => ({
+      ...prevTicket,
+      ticketcategories: value,
+    }));
   };
 
   useEffect(() => {
-    configView();
-    onConfirmToExit(() => setConfirmModalVisible(true));
-    return () => offConfirmToExit();
+    updateSubcategories();
+  }, [newTicket.ticketcategories]);
+
+  useEffect(() => {
+    newTicket.ticket_title = ticket_title;
+    newTicket.ticketcategories = "Bug" || ticketcategories;
+    newTicket.helpdesk_subcategory = "customer" || helpdesk_subcategory;
+    newTicket.contact_name = contactData.data.full_name || contact_name;
+    newTicket.contact_mobile = contactData.data.mobile || contact_mobile;
+    newTicket.contact_email = contactData.data.email || contact_email;
+    newTicket.description = newText;
+    newTicket.imagename_path = imagename_path;
   }, []);
 
+  const handleChange = (e) => {
+    const newEmail = e.target.value;
+    setNewTicket((prevTicket) => ({
+      ...prevTicket,
+      contact_email: newEmail,
+    }));
+  };
+
   return (
-    <Page className="page" hideScrollbar={true}>
-      <Box className="section-container">
-        <Text style={{ fontSize: "18px", fontWeight: "bold" }}>
+    <Page
+      className="section-page"
+      hideScrollbar={true}
+      // restoreScrollOnBack={false}
+    >
+      <Box className="bgr-color">
+        <Text
+          style={{
+            fontWeight: 500,
+            padding: "16px",
+          }}
+        >
           Thông tin Ticket
         </Text>
-        <Box mt={3}>
-          <Text>
-            Tiêu đề <span style={{ color: "red" }}>*</span>
-          </Text>
-          <Input
-            type="text"
-            status={isFormInvalid && !newTicket.ticket_title ? "error" : ""}
-            errorText={errorMessages.ticket_title}
-            placeholder="Nhập tiêu đề"
-            value={newTicket.ticket_title}
-            onChange={(e) => {
-              setNewTicket((prevTicket) => ({
-                ...prevTicket,
-                ticket_title: e.target.value,
-              }));
-            }}
-          />
-        </Box>
-        <Box mt={3}>
-          {inputFields.map((field, index) =>
-            field.name === "ticketcategories" && field.optionsCate ? (
-              <Box key={`category-${index}`} mt={3}>
-                <Select
-                  label="Danh mục"
-                  key={`select-${index}`}
-                  placeholder={`Chọn ${field.placeholder}`}
-                  value={newTicket[field.name]}
-                  onChange={(value) =>
-                    setNewTicket((prevTicket) => ({
-                      ...prevTicket,
-                      [field.name]: value,
-                    }))
-                  }
-                >
-                  {field.optionsCate.map((option) => (
-                    <Select.Option
-                      key={option}
-                      title={translationCategory[option]}
-                      value={option}
-                    >
-                      {translationCategory[option]}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Box>
-            ) : field.options ? (
-              <Box key={`select-${index}`} mt={3}>
-                <Select
-                  label="Chi tiết danh mục"
-                  key={`select-${index}`}
-                  placeholder={`Chọn ${field.placeholder}`}
-                  value={newTicket[field.name]}
-                  onChange={(value) =>
-                    setNewTicket((prevTicket) => ({
-                      ...prevTicket,
-                      [field.name]: value,
-                    }))
-                  }
-                >
-                  {field.options.map((option) => (
-                    <Select.Option
-                      key={option}
-                      title={translationDetailCategory[option]}
-                      value={option}
-                    >
-                      {translationDetailCategory[option]}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Box>
-            ) : (
-              <Box key={`box-${index}`} mt={3}>
-                <Input
-                  key={field.name}
-                  type="text"
-                  value={newTicket[field.name]}
-                  onChange={(e) =>
-                    setNewTicket((prevTicket) => ({
-                      ...prevTicket,
-                      [field.name]: e.target.value,
-                    }))
-                  }
-                />
-              </Box>
-            )
+        <Box
+          height={1.5}
+          style={{ backgroundColor: "rgba(244, 245, 246, 1)" }}
+        ></Box>
+        <Box className="detail-container">
+          <Box>
+            <Text>
+              Tiêu đề <span style={{ color: "red" }}>*</span>
+            </Text>
+            <Input
+              type="text"
+              status={isFormInvalid && !newTicket.ticket_title ? "error" : ""}
+              errorText={errorMessages.ticket_title}
+              placeholder="Nhập tiêu đề"
+              value={newTicket.ticket_title}
+              onChange={(e) => {
+                setNewTicket((prevTicket) => ({
+                  ...prevTicket,
+                  ticket_title: e.target.value,
+                }));
+              }}
+            />
+          </Box>
+          <Box mt={3}>
+            {inputFields.map((field, index) =>
+              field.name === "ticketcategories" && field.optionsCate ? (
+                <Box key={`category-${index}`} mt={3}>
+                  <Select
+                    label="Danh mục"
+                    key={`select-${index}`}
+                    placeholder={`Chọn ${field.placeholder}`}
+                    value={newTicket[field.name]}
+                    closeOnSelect={true}
+                    onChange={(value) => {
+                      handleCategoryChange(value);
+                      setNewTicket((prevTicket) => ({
+                        ...prevTicket,
+                        [field.name]: value,
+                      }));
+                    }}
+                  >
+                    {field.optionsCate.map((option) => (
+                      <Select.Option
+                        key={option}
+                        title={translationCategory[option]}
+                        value={option}
+                      >
+                        {translationCategory[option]}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Box>
+              ) : field.options ? (
+                <Box key={`select-${index}`} mt={3}>
+                  <Select
+                    label="Chi tiết danh mục"
+                    key={`select-${index}`}
+                    placeholder={`Chọn ${field.placeholder}`}
+                    value={newTicket[field.name]}
+                    closeOnSelect={true}
+                    // defaultValue={"customer" || newTicket[field.name]}
+                    onChange={(value) =>
+                      setNewTicket((prevTicket) => ({
+                        ...prevTicket,
+                        [field.name]: value,
+                      }))
+                    }
+                  >
+                    {subcategoryOptions.map((option) => (
+                      <Select.Option
+                        key={option}
+                        title={translationDetailCategory[option]}
+                        value={option}
+                      >
+                        {translationDetailCategory[option]}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Box>
+              ) : (
+                <Box key={`box-${index}`} mt={3}>
+                  <Input
+                    key={field.name}
+                    type="text"
+                    value={newTicket[field.name]}
+                    onChange={(e) =>
+                      setNewTicket((prevTicket) => ({
+                        ...prevTicket,
+                        [field.name]: e.target.value,
+                      }))
+                    }
+                  />
+                </Box>
+              )
+            )}
+          </Box>
+          {isLinkSettingVisible && (
+            <Box mt={2}>
+              <Text>Link cài đặt</Text>
+              <Input
+                type="text"
+                helperText="Khách hàng chưa có link cài đặt có thể bỏ qua"
+                placeholder="Vui lòng nhập link cài đặt"
+                value={inputLinkSetting}
+                onChange={handleLinkSettingChange}
+              />
+            </Box>
           )}
         </Box>
-        <Box mt={3}>
-          <Text>
-            Link cài đặt
-            {/* <span style={{ color: "red" }}>*</span> */}
-          </Text>
-          <Input
-            type="text"
-            // status={isFormInvalid && !newTicket.customer ? "error" : ""}
-            // errorText={errorMessages.customer}
-            placeholder="Vui lòng nhập link cài đặt"
-            value={newTicket.customer}
-            onChange={(e) => {
-              setNewTicket((prevTicket) => ({
-                ...prevTicket,
-                customer: e.target.value,
-              }));
-            }}
-          />
-        </Box>
       </Box>
-      <Box mt={3} className="section-container">
-        <Text style={{ fontSize: "18px", fontWeight: "bold" }}>
+      <Box mt={2} className="bgr-color">
+        <Text style={{ fontWeight: 500, padding: "16px" }}>
           Thông tin liên hệ
         </Text>
-        <Box mt={3}>
-          <Text>Họ và tên</Text>
-          <Input
-            type="text"
-            placeholder="Placeholder"
-            clearable
-            status="success"
-            disabled
-            value={contactData.data.full_name}
-          />
-        </Box>
-        <Box mt={3}>
-          <Text>Di động</Text>
-          <Input
-            type="text"
-            placeholder="Placeholder"
-            clearable
-            status="success"
-            disabled
-            value={contactData.data.mobile}
-          />
-        </Box>
-        <Box mt={3}>
-          <Text>Email</Text>
-          <Input
-            type="text"
-            placeholder="Trống"
-            clearable
-            status="success"
-            disabled
-            value={contactData.data.email}
-          />
-        </Box>
-        <Box mt={3}>
-          <Text>Công ty</Text>
-          <Input
-            type="text"
-            placeholder="Trống"
-            clearable
-            status="success"
-            disabled
-            value=""
-          />
+        <Box
+          height={1.5}
+          style={{ backgroundColor: "rgba(244, 245, 246, 1)" }}
+        ></Box>
+        <Box className="detail-container">
+          <Box>
+            <Text>Họ và tên</Text>
+            <Input
+              type="text"
+              disabled
+              style={{ backgroundColor: "rgba(244, 245, 246, 1)" }}
+              defaultValue={contactData.data.full_name}
+              onChange={(e) => {
+                setNewTicket((prevTicket) => ({
+                  ...prevTicket,
+                  contact_name: e.target.value,
+                }));
+              }}
+            />
+          </Box>
+          <Box mt={3}>
+            <Text>Di động</Text>
+            <Box>
+              <Box mt={1} flexDirection="row" alignItems="center">
+                <Box
+                  height={48}
+                  flexDirection="row"
+                  style={{
+                    width: "23%",
+                    borderTopLeftRadius: "8px",
+                    borderBottomLeftRadius: "8px",
+                    backgroundColor: "rgba(214, 217, 220, 1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: "rgba(20, 20, 21, 1)",
+                      paddingRight: "4px",
+                    }}
+                  >
+                    +84
+                  </Text>
+                  <Icon
+                    icon="zi-chevron-down"
+                    size={16}
+                    style={{ paddingTop: "2px" }}
+                  ></Icon>
+                </Box>
+                <Input
+                  type="text"
+                  style={{
+                    width: "85%",
+                    backgroundColor: "rgba(244, 245, 246, 1)",
+                    borderTopLeftRadius: "0px",
+                    borderBottomLeftRadius: "0px",
+                    display: "flex",
+                    alignItems: "center",
+                    paddingLeft: "8px",
+                  }}
+                  defaultValue={contactData.data.mobile.replace(/^84/, "")}
+                  // value={contactData.data.mobile.replace(/^84/, "")}
+                  disabled
+                  onChange={(e) => {
+                    setNewTicket((prevTicket) => ({
+                      ...prevTicket,
+                      contact_mobile: e.target.value,
+                    }));
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+          <Box mt={3}>
+            <Text>Email</Text>
+            <Input
+              type="text"
+              placeholder="Vui lòng nhập email"
+              // helperText={
+              //   emailValid ? null : (
+              //     <span style={{ color: "red" }}>
+              //       Địa chỉ email không hợp lệ
+              //     </span>
+              //   )
+              // }
+              defaultValue={contactData.data.email || newTicket.contact_email}
+              onChange={handleChange}
+            />
+          </Box>
         </Box>
       </Box>
-      <Box mt={3} className="section-container">
-        <Text style={{ fontSize: "18px", fontWeight: "bold" }}>
+      <Box mt={2} className="bgr-color">
+        <Text style={{ fontWeight: 500, padding: "16px" }}>
           Thông tin mô tả
         </Text>
-        <Box mt={3}>
+        <Box
+          height={1.5}
+          style={{ backgroundColor: "rgba(244, 245, 246, 1)" }}
+        ></Box>
+        <Box className="detail-container">
           <Text>
             Mô tả <span style={{ color: "red" }}>*</span>
           </Text>
@@ -436,80 +733,106 @@ const CreateTicketPage = () => {
             placeholder="Nhập mô tả"
             status={isFormInvalid && !newTicket.description ? "error" : ""}
             errorText={errorMessages.description}
-            value={newTicket.description}
-            maxLength={100}
-            showCount={false}
-            onChange={(e) =>
-              setNewTicket((prevTicket) => ({
-                ...prevTicket,
-                description: e.target.value,
-              }))
-            }
+            value={inputDescription || description}
+            onChange={handleDescriptionChange}
           />
         </Box>
       </Box>
-      <Box mt={3} className="section-container">
-        <Text style={{ fontSize: "18px", fontWeight: "bold" }}>
+      <Box mt={2} className="bgr-color">
+        <Text style={{ fontWeight: 500, padding: "16px" }}>
           Thông tin hình ảnh
         </Text>
-        <Box mt={3}>
+        <Box
+          height={1.5}
+          style={{ backgroundColor: "rgba(244, 245, 246, 1)" }}
+        ></Box>
+        <Box className="detail-container">
           <Text>
-            Kích thước tối thiểu 192x192 (JPG, PNG). Dung lượng tối đa 15MB
+            Tối đa 6 file đính kèm, hỗ trợ định dạng (JPG, PNG, DOC, PDF)
           </Text>
-        </Box>
-        <Box flexDirection="row" alignContent="center">
-          <Box
-            mt={3}
-            height={100}
-            className="choose-image"
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <span onClick={handleIconClick}>
-              <Icon
-                style={{ cursor: "pointer" }}
-                icon="zi-camera"
-                size={32}
-              ></Icon>
-            </span>
-            <input
-              type="file"
-              accept=".jpg, .jpeg, .png, .docx, .xlsx, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={(e) => handleImageUpload(e.target.files)}
-              multiple
-              style={{ display: "none" }}
-              ref={fileInputRef}
-            />
-          </Box>
-          <Box flexDirection="row">
+          <Box flexDirection="row" mt={3} className="image-list-container">
+            <Box>
+              <Box
+                height={100}
+                width={100}
+                className="choose-image"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <span onClick={handleIconClick}>
+                  <Icon
+                    style={{ cursor: "pointer" }}
+                    icon="zi-camera"
+                    size={32}
+                  ></Icon>
+                </span>
+              </Box>
+
+              <input
+                type="file"
+                accept=".jpg, .jpeg, .png, .doc, .docx, .pdf"
+                onChange={(e) => handleImageUpload(e.target.files)}
+                multiple
+                style={{ display: "none" }}
+                ref={fileInputRef}
+              />
+            </Box>
             {images.map((image, index) => (
-              <div key={index} style={{ margin: "10px", textAlign: "center" }}>
-                <img
-                  onClick={() => {
-                    setActiveIndex(index);
-                    setVisible(true);
-                  }}
-                  src={URL.createObjectURL(image)}
-                  alt={`Hình ảnh ${index}`}
-                  style={{
-                    maxWidth: "100px",
-                    maxHeight: "100px",
-                    cursor: "pointer",
-                  }}
-                />
-                <a
-                  href={URL.createObjectURL(image)}
-                  download={`Hình_ảnh_${index}.jpg`}
-                >
-                  Tải xuống
-                </a>
+              <div
+                key={index}
+                style={{ marginLeft: "10px", textAlign: "center" }}
+              >
+                <div style={{ position: "relative", display: "inline-block" }}>
+                  <div
+                    style={{
+                      width: "100px",
+                      height: "100px",
+                      overflow: "hidden",
+                      position: "relative",
+                    }}
+                  >
+                    <img
+                      onClick={() => {
+                        setActiveIndex(index);
+                        setVisible(true);
+                      }}
+                      src={URL.createObjectURL(image)}
+                      alt={`Hình ảnh ${index}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        cursor: "pointer",
+                      }}
+                    />
+                  </div>
+                  <Box
+                    m={1}
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      right: 0,
+                      cursor: "pointer",
+                      background: "white",
+                      borderRadius: "50%",
+                      padding: "2px",
+                    }}
+                    onClick={() => {
+                      handleDeleteImage(index);
+                    }}
+                  >
+                    <Icon
+                      icon="zi-delete"
+                      size={16}
+                      style={{ color: "rgba(0, 106, 245, 1)" }}
+                    />
+                  </Box>
+                </div>
               </div>
             ))}
           </Box>
-
           <ImageViewer
             onClose={() => setVisible(false)}
             activeIndex={activeIndex}
@@ -517,36 +840,122 @@ const CreateTicketPage = () => {
             visible={visible}
           ></ImageViewer>
         </Box>
-
         <ul>
           {files.map((file, index) => (
             <li key={index}>{file.name}</li>
           ))}
         </ul>
+      </Box>
+      <Box mt={2} className="section-container">
+        <Button
+          fullWidth
+          style={{ borderRadius: "8px" }}
+          onClick={() => {
+            if (isFieldsFilled) {
+              setModalConfirmTicket(true);
+            } else {
+              setErrorMessages({
+                ticket_title: !newTicket.ticket_title
+                  ? "Vui lòng nhập tiêu đề."
+                  : "",
+                description: !newTicket.description
+                  ? "Vui lòng nhập mô tả."
+                  : "",
+              });
+              setIsFormInvalid(true);
+            }
+          }}
+        >
+          Lưu
+        </Button>
 
-        <Box mt={5}>
-          <Button fullWidth onClick={createNewTicket}>
-            Lưu
+        <Box height={100}></Box>
+      </Box>
+      <Modal visible={confirmModalVisible}>
+        <img
+          style={{
+            width: "100px",
+            height: "100px",
+            display: "block",
+            margin: "0 auto",
+          }}
+          src="https://clipart-library.com/images/gTe5bLznc.gif"
+        />
+
+        <Text
+          style={{
+            fontWeight: 500,
+            fontSize: "24px",
+            textAlign: "center",
+            paddingTop: "24px",
+            paddingBottom: "16px",
+          }}
+        >
+          My CloudGO
+        </Text>
+        <Text
+          style={{
+            fontWeight: 500,
+            color: "rgba(118, 122, 127, 1)",
+            paddingBottom: "32px",
+          }}
+        >
+          Bạn có chắc chắn rời khỏi Mini App không?
+        </Text>
+        <Box
+          flex
+          flexDirection="row"
+          justifyContent="center"
+          alignContent="center"
+        >
+          <Button
+            variant="tertiary"
+            style={{
+              padding: "8px",
+              width: "45%",
+              borderRadius: "8px",
+              border: "1px rgba(0, 106, 245, 1) solid ",
+            }}
+            size="medium"
+            onClick={() => {
+              closeApp();
+            }}
+          >
+            Rời khỏi
+          </Button>
+          <Box width={5} height={1}></Box>
+          <Button
+            style={{
+              padding: "8px",
+              width: "45%",
+              borderRadius: "8px",
+            }}
+            size="medium"
+            onClick={() => {
+              setConfirmModalVisible(false);
+              offConfirmToExit();
+            }}
+          >
+            Ở lại Mini App
           </Button>
         </Box>
-        <Box height={50}></Box>
-      </Box>
+      </Modal>
       <Modal
-        visible={confirmModalVisible}
-        title="CloudTICKET"
-        description="Bạn có chắc muốn rời mini app không?"
+        visible={modalConfirmTicket && isFieldsFilled}
+        title="Xác nhận tạo ticket"
+        description="Bạn có muốn tạo ticket hay không?"
         actions={[
           {
-            text: "Ở lại Mini App",
+            text: "Quay lại",
             onClick: () => {
-              setConfirmModalVisible(false);
+              setModalConfirmTicket(false);
             },
-            highLight: true,
           },
           {
-            text: "Rời khỏi",
+            text: "Xác nhận",
+            highLight: true,
             onClick: () => {
-              closeApp();
+              createNewTicket();
             },
           },
         ]}

@@ -6,7 +6,7 @@ import { TicketType } from "../type";
 import { configAppView } from "zmp-sdk/apis";
 import url_api from "../service";
 import TicketItem from "../items/ticket_items";
-const SearchPage: React.FunctionComponent = () => {
+const SearchTicketCompanyPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
   const [res, setRes] = useState<TicketType[]>([]);
@@ -60,7 +60,7 @@ const SearchPage: React.FunctionComponent = () => {
               keyword: "",
               filters: {
                 category: "",
-                contact_id: contactData.data?.id,
+                parent_id: contactData.data?.account_id,
               },
               paging: {
                 order_by: "",
@@ -80,14 +80,8 @@ const SearchPage: React.FunctionComponent = () => {
         )
         .then((response) => {
           const json = response.data.data.entry_list;
-
-          // Lọc danh sách ticket theo contact_id
-          const filteredTickets = json.filter((ticket) => {
-            return ticket.contact_id === contactData.data?.id;
-          });
-
-          console.log("Danh sách ticket:", filteredTickets);
-          setRes(filteredTickets);
+          console.log("Danh sách ticket của công ty:", json);
+          setRes(json);
         });
     } catch (error) {
       if (error === "SyntaxError: Unexpected token T in JSON at position 0") {
@@ -259,4 +253,4 @@ const SearchPage: React.FunctionComponent = () => {
   );
 };
 
-export default SearchPage;
+export default SearchTicketCompanyPage;

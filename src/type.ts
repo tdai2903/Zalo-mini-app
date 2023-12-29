@@ -1,5 +1,7 @@
 
-
+/**
+ * Khai báo type 
+ */
 export type TicketType = {
   title: string;
   category:string;
@@ -26,6 +28,7 @@ export type TicketType = {
   description: string;
   contact_mobile:string;
   imagename: string;
+  url:string;
   imagename_path: TicketType[];
   filename:TicketType[];
 }
@@ -40,6 +43,8 @@ export type NewsType={
   url:string;
 }
 
+
+
 export type Info= {
   id: string;
   avatar: string;
@@ -52,7 +57,10 @@ export type CommentType= {
   modcommentsid: string;
   parent_comments: string;
   createdtime: string;
-  assigned_owners: Array<CommentType>;
+  assigned_owners: CommentType[];
+  filename: CommentType[];
+  file:CommentType[];
+  path:string;
   name:string;
   userid:string;
   id: string;

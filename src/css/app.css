@@ -1,6 +1,11 @@
 .section-page {
   background: rgba(244, 245, 246, 1);
 }
+
+.black-page {
+  background: black;
+}
+
 .bgr-color {
   background: #ffffff;
 }
@@ -10,6 +15,11 @@
 .section-container {
   padding: 16px;
   background: #ffffff;
+}
+.tab-container {
+  padding: 8px;
+  /* background: rgba(0, 106, 245, 1); */
+  border-radius: 8px;
 }
 
 .page-content {
@@ -22,6 +32,9 @@
   padding-left: 16px;
   padding-right: 16px;
   background: #ffffff;
+}
+.zaui-image-viewer-container {
+  position: -ms-page;
 }
 
 .center-spinner {
@@ -127,3 +140,7 @@
   /* background: rgba(220, 31, 24, 1); */
   border-radius: 4px;
 }
+/* 
+.zaui-bottom-navigation-content {
+  height: 60px;
+} */

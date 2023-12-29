@@ -77,12 +77,7 @@ const BottomNavigationPage = () => {
   };
 
   const navigate_about_us = () => {
-    if (isGetData) {
-      setActiveTab("about_us");
-    } else {
-      setActiveTab(activeTab);
-      setFollowOAModal(true);
-    }
+    setActiveTab("about_us");
   };
 
   const chatoa = () => {

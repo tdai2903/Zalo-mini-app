@@ -11,7 +11,6 @@ import {
   useSnackbar,
   Sheet,
   DatePicker,
-  Switch,
 } from "zmp-ui";
 import { TicketType } from "../../type";
 import {
@@ -36,6 +35,7 @@ import {
 } from "../../states_recoil/states_recoil";
 import { setNavigationBarLeftButton } from "zmp-sdk";
 import TicketItem from "../../components/ticket";
+import TicketEmpty from "../../components/ticket_empty";
 const TicketsListPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [getData, setGetData] = useRecoilState(ticketListState);
@@ -1059,7 +1059,6 @@ const TicketsListPage: React.FunctionComponent = () => {
               defaultActiveKey="tab1"
               onTabClick={(tabKey) => {
                 setCurrentTab(tabKey);
-                // console.log("aa", tabKey);
                 fetchTickets(tabKey);
               }}
               scrollable={true}
@@ -1084,24 +1083,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {sortedAndFilteredTickets.length === 0 || res.length == 0 ? (
-                  <Box mt={5} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1160,24 +1143,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {followTickets.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1235,24 +1202,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {openTickets.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1315,24 +1266,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {inProgressTickets.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1392,24 +1327,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {closedTickets.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1469,24 +1388,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {cancelTickets.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1829,24 +1732,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {ticketByCompany.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1908,24 +1795,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {ticketByCompany.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -1988,24 +1859,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {ticketByCompany.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -2066,24 +1921,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {ticketByCompany.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon
@@ -2142,24 +1981,8 @@ const TicketsListPage: React.FunctionComponent = () => {
                 style={{ flex: 1 }}
               >
                 {ticketByCompany.length === 0 ? (
-                  <Box m={4} style={{ textAlign: "center" }}>
-                    <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                      alt="iconticket"
-                      style={{
-                        height: "80px",
-                        width: "80px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                    <Text
-                      bold
-                      style={{ textAlign: "center", paddingTop: "10px" }}
-                    >
-                      Quý khách chưa có lịch sử ticket nào
-                    </Text>
-                  </Box>
+                  // Component hiển thị ticket đang trống
+                  <TicketEmpty />
                 ) : loadingFilter ? (
                   <Box className="center-spinner">
                     <FontAwesomeIcon

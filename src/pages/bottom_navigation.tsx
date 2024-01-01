@@ -4,9 +4,9 @@ import HomePage from "./home/index";
 import CreateTicketPage from "./tickets/save";
 import MyAccountPage from "./about_us";
 import TicketsListPage from "./tickets/list";
-import iconcloudgo from "/assets-src/icon-cloudgo.png";
 import { openChat } from "zmp-sdk/apis";
 import { useService } from "../functions/common";
+import ActivatedAccountModal from "../components/noti_allow_info";
 const BottomNavigationPage = () => {
   const [activeTab, setActiveTab] = useState("home/index"); // activeTab bottom navigation
   const [activatedAccount, setActivatedAccount] = useState(false); // state hiển thị modal active account khi chư active
@@ -134,77 +134,11 @@ const BottomNavigationPage = () => {
       {activeTab === "tickets/list" && <TicketsListPage />}
       {activeTab === "tickets/save" && <CreateTicketPage />}
       {activeTab === "about_us" && <MyAccountPage />}
-      <Modal visible={activatedAccount}>
-        <img
-          style={{
-            width: "100px",
-            height: "100px",
-            display: "block",
-            margin: "0 auto",
-          }}
-          src={iconcloudgo}
-        />
-
-        <Text
-          style={{
-            fontWeight: 500,
-            fontSize: "18px",
-            textAlign: "center",
-            paddingTop: "24px",
-            paddingBottom: "16px",
-          }}
-        >
-          Cho phép My CloudGO nhận các thông tin của bạn
-        </Text>
-        <Text
-          style={{
-            fontWeight: 500,
-            fontSize: "4px",
-            color: "rgba(118, 122, 127, 1)",
-            paddingBottom: "32px",
-            textAlign: "center",
-          }}
-        >
-          My CloudGO cần truy cập thông tin tài khoản và số điện thoại của bạn
-          để phục vụ bạn trong quá trình sử dụng
-        </Text>
-        <Box
-          flex
-          flexDirection="row"
-          justifyContent="center"
-          alignContent="center"
-        >
-          <Button
-            variant="tertiary"
-            style={{
-              padding: "8px",
-              width: "50%",
-              borderRadius: "8px",
-              border: "1px rgba(0, 106, 245, 1) solid ",
-            }}
-            size="medium"
-            onClick={() => {
-              setActivatedAccount(false);
-            }}
-          >
-            Từ chối
-          </Button>
-          <Box width={5} height={1}></Box>
-          <Button
-            style={{
-              padding: "8px",
-              width: "50%",
-              borderRadius: "8px",
-            }}
-            size="medium"
-            onClick={() => {
-              setActivatedAccount(false);
-            }}
-          >
-            Đã hiểu
-          </Button>
-        </Box>
-      </Modal>
+      <ActivatedAccountModal
+        visible={activatedAccount}
+        onClose={() => setActivatedAccount(false)}
+        onClick={() => setActivatedAccount(false)}
+      />
     </Page>
   );
 };

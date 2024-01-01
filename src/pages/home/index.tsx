@@ -18,6 +18,8 @@ import NewsComponent from "../../pages/news/index";
 import UserInformation from "../../components/user_card";
 import { useService } from "../../functions/common";
 import TicketItem from "../../components/ticket";
+import ActivatedAccountModal from "../../components/noti_allow_info";
+import TicketEmpty from "../../components/ticket_empty";
 const HomePage = ({ onIsGetDataChange }) => {
   const navigate = useNavigate();
   const profile = JSON.parse(localStorage.getItem("profile") || "{}"); // lấy profile từ local storage
@@ -264,26 +266,8 @@ const HomePage = ({ onIsGetDataChange }) => {
         {!loadToApp &&
           (isGetData ? (
             res.length === 0 ? (
-              <Box mt={5} style={{ textAlign: "center" }}>
-                <img
-                  src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
-                  alt="iconticket"
-                  style={{
-                    height: "80px",
-                    width: "80px",
-                    display: "block",
-                    margin: "0 auto",
-                  }}
-                />
-                <Text
-                  style={{
-                    textAlign: "center",
-                    paddingTop: "10px",
-                  }}
-                >
-                  Quý khách chưa có lịch sử ticket nào
-                </Text>
-              </Box>
+              // Component hiển thị ticket đang trống
+              <TicketEmpty />
             ) : (
               /* Component danh sách ticket */
               res.map((ticket: TicketType) => (
@@ -344,79 +328,16 @@ const HomePage = ({ onIsGetDataChange }) => {
           </Box>
         )}
         <Box height={120}></Box>
-
-        <Modal visible={activated}>
-          <img
-            style={{
-              width: "100px",
-              height: "100px",
-              display: "block",
-              margin: "0 auto",
-            }}
-            src={iconcloudgo}
-          />
-
-          <Text
-            style={{
-              fontWeight: 500,
-              fontSize: service.resFont(18),
-              textAlign: "center",
-              paddingTop: "24px",
-              paddingBottom: "16px",
-            }}
-          >
-            Vui lòng chia sẻ thông tin tài khoản của bạn
-          </Text>
-          <Text
-            style={{
-              fontWeight: 500,
-              fontSize: service.resFont(18),
-              color: "rgba(118, 122, 127, 1)",
-              paddingBottom: "32px",
-              textAlign: "center",
-            }}
-          >
-            My CloudGO cần truy cập thông tin tài khoản của bạn để phục vụ bạn
-            trong quá trình sử dụng
-          </Text>
-          <Box
-            flex
-            flexDirection="row"
-            justifyContent="center"
-            alignContent="center"
-          >
-            <Button
-              variant="tertiary"
-              style={{
-                padding: "8px",
-                width: "50%",
-                borderRadius: "8px",
-                border: "1px rgba(0, 106, 245, 1) solid ",
-              }}
-              size="medium"
-              onClick={() => {
-                setActivated(false);
-              }}
-            >
-              Từ chối
-            </Button>
-            <Box width={5} height={1}></Box>
-            <Button
-              style={{
-                padding: "8px",
-                width: "50%",
-                borderRadius: "8px",
-              }}
-              size="medium"
-              onClick={() => {
-                service.getAccessTokenAndPhoneNumber();
-                setActivated(false);
-              }}
-            >
-              Đã hiểu
-            </Button>
-          </Box>
-        </Modal>
+        <ActivatedAccountModal
+          visible={activated}
+          onClose={() => {
+            setActivated(false);
+          }}
+          onClick={() => {
+            getAccessTokenAndPhoneNumber();
+            setActivated(false);
+          }}
+        />
       </Page>
     </PullToRefresh>
   );

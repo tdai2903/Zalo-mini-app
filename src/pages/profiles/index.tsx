@@ -1,50 +1,31 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Box,
-  Button,
-  Input,
-  Page,
-  Text,
-  useSnackbar,
-  Avatar,
-  Icon,
-} from "zmp-ui";
-import { configAppView } from "zmp-sdk/apis";
-import { ContactType } from "../type";
-import url_api from "../service";
-import { setNavigationBarLeftButton } from "zmp-sdk";
+import { Box, Button, Input, Page, Text, useSnackbar, Avatar } from "zmp-ui";
+import { ContactType } from "../../type";
+import url_api from "../../service";
+import { useService } from "../../functions/common";
 
 const DetailAccountPage = () => {
-  const { openSnackbar } = useSnackbar();
-  const contactData = JSON.parse(localStorage.getItem("contact") || "{}");
-  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-  const token = localStorage.getItem("token");
-  const [emailInput, setEmailInput] = useState("");
-  const [errorText, setErrorText] = useState("");
-  const [status, setStatus] = useState("");
-  const initialTicketState: ContactType = {
+  const { configView, setLeftButton } = useService();
+  const { openSnackbar } = useSnackbar(); // hiển thị alert từ zalo api
+  const contactData = JSON.parse(localStorage.getItem("contact") || "{}"); // lấy contactData từ localStorage
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}"); // lấy userInfo từ localStorage
+  const token = localStorage.getItem("token"); // lấy tokenapi pms-dev từ localStorage
+  const [emailInput, setEmailInput] = useState(""); // state input email
+  const [errorText, setErrorText] = useState(""); // state hiển thị error text
+  const [status, setStatus] = useState(""); // state status ở input
+  const initialContactState: ContactType = {
     firstname: "",
     lastname: "",
     mobile: "",
     email: "",
     zalo_id_miniapp: "",
-  };
+  }; // state các field contact
   const [newContact, setNewContact] = React.useState<ContactType>({
-    ...initialTicketState,
+    ...initialContactState,
   });
 
-  const setLeftButton = async () => {
-    try {
-      await setNavigationBarLeftButton({
-        type: "back",
-      });
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
+  // Validate email
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.(com|vn)$/;
     if (email.trim() === "") {
@@ -53,24 +34,9 @@ const DetailAccountPage = () => {
     return emailRegex.test(email);
   };
 
-  const configView = async () => {
-    try {
-      await configAppView({
-        headerColor: "#006AF5",
-        headerTextColor: "white",
-        hideAndroidBottomNavigationBar: true,
-        hideIOSSafeAreaBottom: true,
-        actionBar: {
-          title: "Thông tin tài khoản",
-          leftButton: "back",
-        },
-      });
-    } catch (error) {}
-  };
-
   useEffect(() => {
-    configView();
-    setLeftButton();
+    configView("Thông tin tài khoản", "back");
+    setLeftButton("back");
     setNewContact((prevTicket) => ({
       ...prevTicket,
       email: contactData.data?.email || "",
@@ -78,16 +44,24 @@ const DetailAccountPage = () => {
     setEmailInput(contactData.data?.email || "");
   }, []);
 
+  /**
+   * API UpdateContactZalo dùng để update contact trên module contact crm
+   * @param email | zalo_id_miniapp
+   * @param full_name : lấy từ userInfo zalo
+   * @param phoneNumber : lấy từ api zalo getPhoneNumber
+   */
   const editContact = async () => {
+    // check validate email
     const isEmailValid = validateEmail(emailInput);
     if (!isEmailValid) {
       setErrorText("Email không hợp lệ. Vui lòng kiểm tra lại.");
       setStatus("error");
       return;
     }
-
     setErrorText("");
     setStatus("");
+
+    // hiển thị alert khi edit contact
     openSnackbar({
       text: "Đang chỉnh sửa contact...",
       type: "loading",
@@ -115,8 +89,9 @@ const DetailAccountPage = () => {
         }
       )
       .then((response) => {
-        console.log("Đã chỉnh sửa contact:", response.data);
-        setNewContact(initialTicketState);
+        setNewContact(initialContactState);
+
+        // hiển thị alert khi edit thành công
         openSnackbar({
           text: "Chỉnh sửa contact thành công",
           type: "success",

@@ -1,18 +1,9 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Button,
-  Text,
-  Page,
-  useNavigate,
-  Icon,
-  useSnackbar,
-} from "zmp-ui";
-import { login, configAppView, requestSendNotification } from "zmp-sdk/apis";
+import { Box, Button, Text, Page, useNavigate, useSnackbar } from "zmp-ui";
+import { configAppView } from "zmp-sdk/apis";
 import loginImg from "/assets-src/login.png";
 import logo from "/assets-src/cloudgo-logo.png";
-
 import url_api from "../service";
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -20,44 +11,20 @@ const LoginPage = () => {
   const [token, setToken] = useState("");
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [screenHeight, setScreenHeight] = useState(window.innerHeight);
-  const [currentColorIndex, setCurrentColorIndex] = useState(0);
-  const treeColors = ["green", "red", "green", "blue", "red", "white"];
+
+  // lưu token vào localStorage
   const saveLocateToken = (updatedToken) => {
     localStorage.setItem("token", updatedToken);
     setToken(updatedToken);
   };
 
-  const sendNotification = async () => {
-    try {
-      await requestSendNotification({});
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    sendNotification();
-    const intervalId = setInterval(() => {
-      setCurrentColorIndex((prevIndex) => (prevIndex + 1) % treeColors.length);
-    }, 400);
-
-    return () => clearInterval(intervalId); // Cleanup the interval on component unmount
-  }, []);
-
+  //set state width | height screen
   const handleWindowResize = () => {
     setScreenWidth(window.innerWidth);
     setScreenHeight(window.innerHeight);
   };
 
-  const handleLogin = async () => {
-    try {
-      await login({});
-    } catch (error) {
-      console.log("Login thất bại", error);
-    }
-  };
-
+  //API zalo Config header mini app
   const configView = async () => {
     try {
       await configAppView({
@@ -72,6 +39,11 @@ const LoginPage = () => {
     } catch (error) {}
   };
 
+  /**
+   * API login get token từ crm
+   * @param username | password
+   * @returns token
+   */
   const getNewToken = async () => {
     try {
       openSnackbar({
@@ -101,11 +73,10 @@ const LoginPage = () => {
       );
 
       const json = response.data.data;
-      console.log("login thành công", json);
       closeSnackbar();
       saveLocateToken(json.token);
       setToken(json.token);
-      navigate("/main", { replace: true });
+      navigate("/bottom_navigation", { replace: true });
       return json;
     } catch (error) {
       console.error("Lỗi khi lấy token", error);
@@ -113,7 +84,6 @@ const LoginPage = () => {
   };
 
   useEffect(() => {
-    handleLogin();
     configView();
     window.addEventListener("resize", handleWindowResize);
     return () => {
@@ -121,11 +91,13 @@ const LoginPage = () => {
     };
   }, []);
 
+  // get font width
   const resFont = (value) => {
     let fontValue = (value / screenWidth) * screenWidth;
     return `${fontValue}px`;
   };
 
+  // get height screen
   const resHeight = (value) => {
     let fontValue = (value / screenHeight) * screenHeight;
     return `${fontValue}px`;

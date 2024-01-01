@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import TicketItem from "../items/ticket_items";
 import {
   Page,
   Icon,
@@ -14,7 +13,7 @@ import {
   DatePicker,
   Switch,
 } from "zmp-ui";
-import { TicketType } from "../type";
+import { TicketType } from "../../type";
 import {
   startOfDay,
   endOfDay,
@@ -26,18 +25,17 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { configAppView } from "zmp-sdk/apis";
-
-import url_api from "../service";
+import url_api from "../../service";
 import axios from "axios";
 import PullToRefresh from "react-simple-pull-to-refresh";
-import TicketCompany from "../items/ticketcompany";
 import { useRecoilState } from "recoil";
 import {
   loadingListState,
   resCompanyState,
   ticketListState,
-} from "../states_recoil/states_recoil";
+} from "../../states_recoil/states_recoil";
 import { setNavigationBarLeftButton } from "zmp-sdk";
+import TicketItem from "../../components/ticket";
 const TicketsListPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
   const [getData, setGetData] = useRecoilState(ticketListState);
@@ -45,7 +43,6 @@ const TicketsListPage: React.FunctionComponent = () => {
   const [isGetData, setIsGetData] = useState(false);
   const [ticketByCompany, setTicketByCompany] = useState<TicketType[]>([]);
   const [searchText, setSearchText] = useState("");
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [allTickets, setAllTickets] = useState<TicketType[]>([]);
   const [filteredTicketsCount, setFilteredTicketsCount] = useState(0);
   const [visibleTicketsCount, setVisibleTicketsCount] = useState(10);
@@ -91,7 +88,6 @@ const TicketsListPage: React.FunctionComponent = () => {
   const [totalCancelTickets, setTotalCancelTickets] = useState<number>(0);
   const [currentTab, setCurrentTab] = useState("tab1");
   const [currentTabCompany, setCurrentTabCompany] = useState("all");
-
   const [tabParent, setTabParent] = useState("forme");
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [screenHeight, setScreenHeight] = useState(window.innerHeight);
@@ -235,74 +231,6 @@ const TicketsListPage: React.FunctionComponent = () => {
       setSortedAndFilteredTicketsBackup(json);
       setIsGetData(true);
       console.log("danh sách ticket của bạn", json);
-
-      // let filteredAndSorted = [...sortedAndFilteredTicketsBackup];
-      // let filtertab4 = [...sortedAndFilteredTicketsBackup];
-
-      // switch (filtered) {
-      //   case "today":
-      //     const today = new Date();
-      //     const startOfToday = startOfDay(today).getTime();
-      //     const endOfToday = endOfDay(today).getTime();
-      //     setFiltered("today");
-      //     console.log("hôm nay");
-      //     filteredAndSorted = json.filter((ticket) => {
-      //       const ticketTime = new Date(ticket.createdtime).getTime();
-
-      //       return ticketTime >= startOfToday && ticketTime <= endOfToday;
-      //     });
-      //     break;
-      //   case "thisWeek":
-      //     const startOfWeekDate = startOfWeek(new Date()).getTime();
-      //     const endOfWeekDate = endOfWeek(new Date()).getTime();
-      //     setFiltered("thisWeek");
-      //     console.log("tuần này");
-      //     if (currentTab == "tab1") {
-      //       console.log("ticketuuuuuu");
-
-      //       //filter for tab1
-      //       filteredAndSorted = json.filter((ticket) => {
-      //         const ticketTime = new Date(ticket.createdtime).getTime();
-
-      //         return (
-      //           ticketTime >= startOfWeekDate && ticketTime <= endOfWeekDate
-      //         );
-      //       });
-
-      //       //filter for tab2
-      //       filtertab4 = inProgressTickets.filter((ticket) => {
-      //         const ticketTime = new Date(ticket.createdtime).getTime();
-
-      //         return (
-      //           ticketTime >= startOfWeekDate && ticketTime <= endOfWeekDate
-      //         );
-      //       });
-      //     }
-
-      //     console.log("ticket đang tìm kiếm", filteredAndSorted);
-      //     setInProgressTickets(filteredAndSorted);
-      //     setTotalInProgressTickets(filtertab4.length);
-      //     console.log("ticket", filtertab4.length);
-
-      //     setRes(filteredAndSorted);
-      //     break;
-      //   case "thisMonth":
-      //     const startOfMonthDate = startOfMonth(new Date()).getTime();
-      //     const endOfMonthDate = endOfMonth(new Date()).getTime();
-      //     setFiltered("thisMonth");
-      //     console.log("hôm nay");
-
-      //     filteredAndSorted = json.filter((ticket) => {
-      //       const ticketTime = new Date(ticket.createdtime).getTime();
-      //       return (
-      //         ticketTime >= startOfMonthDate && ticketTime <= endOfMonthDate
-      //       );
-      //     });
-      //     break;
-
-      //   default:
-      //     break;
-      // }
 
       if (!fetchInit) {
         const followTickets = filterAndSortTickets(json, "tab2");
@@ -604,9 +532,6 @@ const TicketsListPage: React.FunctionComponent = () => {
         return ticketTime >= startOfMonthDate && ticketTime <= endOfMonthDate;
       });
     }
-    console.log("a", filteredAndSorted);
-    console.log("11a", sortedAndFilteredTicketsBackup);
-
     setRes(filteredAndSorted);
     setTicketByCompany(filteredAndSorted);
     setFollowTickets(filteredAndSorted);
@@ -998,7 +923,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   placeholder="Tìm ticket theo tên, mã, trạng thái"
                   value={searchText}
                   onClick={() => {
-                    navigate(`/search_ticket?q=${searchText}`);
+                    navigate(`/tickets/search?q=${searchText}`);
                   }}
                   onChange={(e) => setSearchText(e.target.value)}
                 />
@@ -1021,9 +946,6 @@ const TicketsListPage: React.FunctionComponent = () => {
                   icon={"zi-filter"}
                   style={{
                     color: "rgba(118, 122, 127, 1)",
-                    // color: filtering
-                    //   ? "rgba(18, 144, 255, 1)"
-                    //   : "rgba(118, 122, 127, 1)",
                   }}
                 />
               </Box>
@@ -1658,7 +1580,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   placeholder="Tìm ticket theo tên, mã, trạng thái"
                   value={searchText}
                   onClick={() => {
-                    navigate(`/search_ticket_company?q=${searchText}`);
+                    navigate(`/tickets/search?q=${searchText}`);
                   }}
                   onChange={(e) => setSearchText(e.target.value)}
                 />
@@ -1859,7 +1781,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   ticketByCompany
                     .slice(0, visibleTicketsCount)
                     .map((ticket) => (
-                      <TicketCompany
+                      <TicketItem
                         key={ticket.ticketid}
                         ticket={ticket}
                         translationStatus={translationStatus}
@@ -1868,7 +1790,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                         formatCreatedTime={formatCreatedTime}
                         navigate={navigate}
                         followTicket={followTicket}
-                        setTicketByCompany={setTicketByCompany}
+                        setRes={setTicketByCompany}
                       />
                     ))
                 )}
@@ -1939,7 +1861,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                     .filter((ticket) => ticket.starred === "1")
                     .slice(0, visibleTicketsCount)
                     .map((ticket) => (
-                      <TicketCompany
+                      <TicketItem
                         key={ticket.ticketid}
                         ticket={ticket}
                         translationStatus={translationStatus}
@@ -1948,7 +1870,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                         formatCreatedTime={formatCreatedTime}
                         navigate={navigate}
                         followTicket={followTicket}
-                        setTicketByCompany={setTicketByCompany}
+                        setRes={setTicketByCompany}
                       />
                     ))
                 )}
@@ -2017,7 +1939,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   ticketByCompany
                     .slice(0, visibleTicketsCount)
                     .map((ticket) => (
-                      <TicketCompany
+                      <TicketItem
                         key={ticket.ticketid}
                         ticket={ticket}
                         translationStatus={translationStatus}
@@ -2026,7 +1948,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                         formatCreatedTime={formatCreatedTime}
                         navigate={navigate}
                         followTicket={followTicket}
-                        setTicketByCompany={setTicketByCompany}
+                        setRes={setTicketByCompany}
                       />
                     ))
                 )}
@@ -2097,7 +2019,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   ticketByCompany
                     .slice(0, visibleTicketsCount)
                     .map((ticket) => (
-                      <TicketCompany
+                      <TicketItem
                         key={ticket.ticketid}
                         ticket={ticket}
                         translationStatus={translationStatus}
@@ -2106,7 +2028,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                         formatCreatedTime={formatCreatedTime}
                         navigate={navigate}
                         followTicket={followTicket}
-                        setTicketByCompany={setTicketByCompany}
+                        setRes={setTicketByCompany}
                       />
                     ))
                 )}
@@ -2175,7 +2097,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   ticketByCompany
                     .slice(0, visibleTicketsCount)
                     .map((ticket) => (
-                      <TicketCompany
+                      <TicketItem
                         key={ticket.ticketid}
                         ticket={ticket}
                         translationStatus={translationStatus}
@@ -2184,7 +2106,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                         formatCreatedTime={formatCreatedTime}
                         navigate={navigate}
                         followTicket={followTicket}
-                        setTicketByCompany={setTicketByCompany}
+                        setRes={setTicketByCompany}
                       />
                     ))
                 )}
@@ -2251,7 +2173,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   ticketByCompany
                     .slice(0, visibleTicketsCount)
                     .map((ticket) => (
-                      <TicketCompany
+                      <TicketItem
                         key={ticket.ticketid}
                         ticket={ticket}
                         translationStatus={translationStatus}
@@ -2260,7 +2182,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                         formatCreatedTime={formatCreatedTime}
                         navigate={navigate}
                         followTicket={followTicket}
-                        setTicketByCompany={setTicketByCompany}
+                        setRes={setTicketByCompany}
                       />
                     ))
                 )}

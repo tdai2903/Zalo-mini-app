@@ -2,20 +2,18 @@ import React from "react";
 import { Route } from "react-router-dom";
 import { App, ZMPRouter, AnimationRoutes, SnackbarProvider } from "zmp-ui";
 import { RecoilRoot } from "recoil";
-import HomePage from "../pages/home";
-import CreateTicketPage from "../pages/create_ticket";
-import DetailTicketPage from "../pages/detail_ticket";
-import EditTicketPage from "../pages/edit_ticket";
-import SearchPage from "../pages/search_ticket";
-import DetailAccountPage from "../pages/detail_account";
-import NewsPage from "../pages/news";
-import BottomNavigationPage from "../pages/main";
+import HomePage from "../pages/home/index";
+import DetailTicketPage from "../pages/tickets/detail";
+import SearchPage from "../pages/tickets/search";
+import DetailAccountPage from "../pages/profiles/index";
 import LoginPage from "../pages/login";
 import AboutUsPage from "../pages/about_us";
-import TicketsListPage from "../pages/tickets_list";
-import ConfirmTicketPage from "../pages/confirmTicket";
-import TicketItem from "../items/ticket_items";
-import SearchTicketCompanyPage from "../pages/search_ticket_company";
+import TicketsListPage from "../pages/tickets/list";
+import ConfirmTicketPage from "../pages/tickets/confirm";
+import SaveTicketPage from "../pages/tickets/save";
+import TicketItem from "./ticket";
+import BottomNavigationPage from "../pages/bottom_navigation";
+
 const MyApp = () => {
   return (
     <RecoilRoot>
@@ -23,53 +21,23 @@ const MyApp = () => {
         <SnackbarProvider>
           <ZMPRouter>
             <AnimationRoutes>
-              <Route path="/" element={<LoginPage></LoginPage>}></Route>
+              <Route path="/" element={<LoginPage />} />
               <Route
-                path="/main"
-                element={<BottomNavigationPage></BottomNavigationPage>}
-              ></Route>
+                path="/bottom_navigation"
+                element={<BottomNavigationPage />}
+              />
+              <Route path="/ticket" element={<TicketItem />} />
+              <Route path="/tickets/list" element={<TicketsListPage />} />
               <Route
-                path="/ticket_items"
-                element={<TicketItem></TicketItem>}
-              ></Route>
-              <Route
-                path="/tickets_list"
-                element={<TicketsListPage></TicketsListPage>}
-              ></Route>
-              <Route
-                path="/edit_ticket"
-                element={<EditTicketPage></EditTicketPage>}
-              ></Route>
-              <Route
-                path="/detail_ticket/:id"
-                element={<DetailTicketPage></DetailTicketPage>}
-              ></Route>
-              <Route
-                path="/create_ticket"
-                element={<CreateTicketPage></CreateTicketPage>}
-              ></Route>
-              <Route
-                path="/search_ticket"
-                element={<SearchPage></SearchPage>}
-              ></Route>
-              <Route
-                path="/search_ticket_company"
-                element={<SearchTicketCompanyPage></SearchTicketCompanyPage>}
-              ></Route>
-              <Route
-                path="/about_us"
-                element={<AboutUsPage></AboutUsPage>}
-              ></Route>
-              <Route
-                path="/confirmTicket"
-                element={<ConfirmTicketPage></ConfirmTicketPage>}
-              ></Route>
-              <Route
-                path="/detail_account"
-                element={<DetailAccountPage></DetailAccountPage>}
-              ></Route>
-              <Route path="/news" element={<NewsPage></NewsPage>}></Route>
-              <Route path="/home" element={<HomePage></HomePage>}></Route>
+                path="/tickets/detail/:id"
+                element={<DetailTicketPage />}
+              />
+              <Route path="/tickets/save" element={<SaveTicketPage />} />
+              <Route path="/tickets/search" element={<SearchPage />} />
+              <Route path="/about_us" element={<AboutUsPage />} />
+              <Route path="/tickets/confirm" element={<ConfirmTicketPage />} />
+              <Route path="/profiles/index" element={<DetailAccountPage />} />
+              <Route path="/home/index" element={<HomePage />} />
             </AnimationRoutes>
           </ZMPRouter>
         </SnackbarProvider>
@@ -77,4 +45,5 @@ const MyApp = () => {
     </RecoilRoot>
   );
 };
+
 export default MyApp;

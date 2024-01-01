@@ -57,7 +57,7 @@ const UserInformation = ({
             flexDirection="row"
             onClick={() => {
               if (isGetData) {
-                navigate(`/detail_account`);
+                navigate(`/profiles/index`);
               } else {
                 setGetAccessTokenModal(true);
               }

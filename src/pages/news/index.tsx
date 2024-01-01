@@ -1,7 +1,9 @@
 // NewsComponent.js
 import React from "react";
 import { Box, Text, List } from "zmp-ui";
-
+/**
+ * Component danh sách tin tức ở homePage
+ */
 const NewsComponent = ({
   resFont,
   news,

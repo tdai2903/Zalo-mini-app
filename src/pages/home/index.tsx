@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Page, useNavigate, Box, Text, Button, Modal } from "zmp-ui";
-import { NewsType, TicketType } from "../type";
+import { NewsType, TicketType } from "../../type";
 import iconcloudgo from "/assets-src/icon-cloudgo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
@@ -11,29 +11,28 @@ import {
   loadingState,
   loadToAppState,
   offsetState,
-} from "../states_recoil/states_recoil";
+} from "../../states_recoil/states_recoil";
 import PullToRefresh from "react-simple-pull-to-refresh";
-import TicketItem from "../items/ticket_items";
 import { useRecoilState } from "recoil";
-import NewsComponent from "../pages/news/index";
-import UserInformation from "../components/user_card";
-import { useService } from "../functions/common";
+import NewsComponent from "../../pages/news/index";
+import UserInformation from "../../components/user_card";
+import { useService } from "../../functions/common";
+import TicketItem from "../../components/ticket";
 const HomePage = ({ onIsGetDataChange }) => {
   const navigate = useNavigate();
-  const profile = JSON.parse(localStorage.getItem("profile") || "{}");
-  const [res, setRes] = useRecoilState(resState);
-  const [isGetData, setIsGetData] = useRecoilState(isGetDataState);
-  const [offset, setOffSet] = useRecoilState(offsetState);
-  const [news, setNews] = useState<NewsType[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadToApp, setLoadToApp] = useRecoilState(loadToAppState);
-  const [loading, setLoading] = useRecoilState(loadingState);
-  const [loadingFilter, setLoadingFilter] = useState(false);
-  const [followOAModal, setFollowOAModal] = useState(false);
-  const [getAccessTokenModal, setGetAccessTokenModal] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [userInfo, setUserInfo] = useRecoilState(userInfoState);
+  const profile = JSON.parse(localStorage.getItem("profile") || "{}"); // lấy profile từ local storage
+  const [res, setRes] = useRecoilState(resState); // state để chứa data list ticket
+  const [isGetData, setIsGetData] = useRecoilState(isGetDataState); // state check đã get được data chưa
+  const [offset, setOffset] = useRecoilState(offsetState); // state global offset từ api get ticket list
+  const [news, setNews] = useState<NewsType[]>([]); // state chứa danh sách tin tức trả về
+  const [isRefreshing, setIsRefreshing] = useState(false); // state check refresh page
+  const [isLoading, setIsLoading] = useState(false); // state loading app
+  const [loadToApp, setLoadToApp] = useRecoilState(loadToAppState); // state loading app khi vào app lần đầu
+  const [loading, setLoading] = useRecoilState(loadingState); // state loading danh sách ticket
+  const [activated, setActivated] = useState(false); // state hiển thị modal khi chưa kích hoạt tài khoản
+  const [getAccessTokenModal, setGetAccessTokenModal] = useState(false); // nếu KH chưa active account thì hiển thị modal
+  const [loadingMore, setLoadingMore] = useState(false); // state loading more khi scroll
+  const [userInfo, setUserInfo] = useRecoilState(userInfoState); //state chứa thông tin tài khoản
 
   /* Sử dụng các hàm từ file common.ts*/
   const service = useService();
@@ -73,10 +72,10 @@ const HomePage = ({ onIsGetDataChange }) => {
 
   useEffect(() => {
     /*gọi api zalo edit header */
-    configView();
+    configView("My CloudGO", "none");
 
     /*gọi api ẩn left button header */
-    setLeftButton();
+    setLeftButton("none");
 
     /* Gọi hàm để lấy access token và số điện thoại */
     getAccessTokenAndPhoneNumber();
@@ -160,7 +159,6 @@ const HomePage = ({ onIsGetDataChange }) => {
    * getAccessTokenAndPhoneNumber để getcontact và lấy danh sách ticket theo contact đó
    */
   const handleReload = () => {
-    console.log("reload");
     fetchNews();
     getAccessTokenAndPhoneNumber();
   };
@@ -265,16 +263,7 @@ const HomePage = ({ onIsGetDataChange }) => {
         )}
         {!loadToApp &&
           (isGetData ? (
-            loadingFilter ? (
-              <Box className="center-spinner">
-                <FontAwesomeIcon
-                  size="2x"
-                  icon={faSpinner}
-                  spin
-                  color="rgba(0, 106, 245, 1)"
-                />
-              </Box>
-            ) : res.length === 0 ? (
+            res.length === 0 ? (
               <Box mt={5} style={{ textAlign: "center" }}>
                 <img
                   src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
@@ -336,13 +325,14 @@ const HomePage = ({ onIsGetDataChange }) => {
               <Button
                 size="small"
                 onClick={() => {
-                  setFollowOAModal(true);
+                  setActivated(true);
                 }}
               >
                 Kích hoạt
               </Button>
             </Box>
           ))}
+
         {isLoading && (
           <Box className="center-spinner">
             <FontAwesomeIcon
@@ -355,7 +345,7 @@ const HomePage = ({ onIsGetDataChange }) => {
         )}
         <Box height={120}></Box>
 
-        <Modal visible={followOAModal}>
+        <Modal visible={activated}>
           <img
             style={{
               width: "100px",
@@ -405,7 +395,7 @@ const HomePage = ({ onIsGetDataChange }) => {
               }}
               size="medium"
               onClick={() => {
-                setFollowOAModal(false);
+                setActivated(false);
               }}
             >
               Từ chối
@@ -420,7 +410,7 @@ const HomePage = ({ onIsGetDataChange }) => {
               size="medium"
               onClick={() => {
                 service.getAccessTokenAndPhoneNumber();
-                setFollowOAModal(false);
+                setActivated(false);
               }}
             >
               Đã hiểu

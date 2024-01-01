@@ -1,37 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { BottomNavigation, Box, Button, Icon, Modal, Page, Text } from "zmp-ui";
-import HomePage from "./home";
-import CreateTicketPage from "./create_ticket";
+import HomePage from "./home/index";
+import CreateTicketPage from "./tickets/save";
 import MyAccountPage from "./about_us";
-import SearchPage from "./tickets_list";
+import TicketsListPage from "./tickets/list";
 import iconcloudgo from "/assets-src/icon-cloudgo.png";
-import { configAppView } from "zmp-sdk/apis";
 import { openChat } from "zmp-sdk/apis";
+import { useService } from "../functions/common";
 const BottomNavigationPage = () => {
-  const [activeTab, setActiveTab] = useState("home");
-  const [followOAModal, setFollowOAModal] = useState(false);
-  const [isGetData, setIsGetData] = useState(false);
-  const configView = async () => {
-    try {
-      await configAppView({
-        headerColor: "#006AF5",
-        headerTextColor: "white",
-        hideAndroidBottomNavigationBar: true,
-        hideIOSSafeAreaBottom: true,
-        actionBar: {
-          title: "My CloudGO",
-          leftButton: "none",
-        },
-      });
-    } catch (error) {
-      // Xử lý khi gọi API thất bại
-    }
-  };
+  const [activeTab, setActiveTab] = useState("home/index"); // activeTab bottom navigation
+  const [activatedAccount, setActivatedAccount] = useState(false); // state hiển thị modal active account khi chư active
+  const [isGetData, setIsGetData] = useState(false); // state check getData
+  const { configView } = useService();
 
   const handleIsGetDataChange = (newValue) => {
     setIsGetData(newValue);
   };
 
+  // openChatScreen từ api zalo
   const openChatScreen = async () => {
     try {
       await openChat({
@@ -46,50 +32,46 @@ const BottomNavigationPage = () => {
   };
 
   useEffect(() => {
-    configView();
+    configView("My CloudGO", "none");
   }, []);
 
-  const navigateToCreateTicket = () => {
+  // Hàm navigate các tab ở bottom navigation
+  const navigateWithCondition = (tab) => {
     if (isGetData) {
-      setActiveTab("create_ticket");
+      setActiveTab(tab);
     } else {
       setActiveTab(activeTab);
-      setFollowOAModal(true);
+      setActivatedAccount(true);
     }
   };
 
-  const navigate_tickets_list = () => {
-    if (isGetData) {
-      setActiveTab("tickets_list");
-    } else {
-      setActiveTab(activeTab);
-      setFollowOAModal(true);
-    }
-  };
-
+  // navigate home page
   const navigate_home = () => {
-    if (isGetData) {
-      setActiveTab("home");
-    } else {
-      setActiveTab(activeTab);
-      setFollowOAModal(true);
-    }
+    navigateWithCondition("home/index");
   };
 
-  const navigate_about_us = () => {
-    setActiveTab("about_us");
+  // navigate ticket_list
+  const navigate_tickets_list = () => {
+    navigateWithCondition("tickets/list");
   };
 
+  //navigate save ticket page
+  const navigateToCreateTicket = () => {
+    navigateWithCondition("tickets/save");
+  };
+
+  // navigate chat oa
   const chatoa = () => {
-    if (isGetData) {
-      setActiveTab(activeTab);
-      openChatScreen();
-    } else {
-      setActiveTab(activeTab);
-      setFollowOAModal(true);
-    }
+    navigateWithCondition(activeTab);
+    openChatScreen();
   };
 
+  // navigate about cloudgo page
+  const navigate_about_us = () => {
+    navigateWithCondition("about_us");
+  };
+
+  // hàm setActiveTab khi click qua tab khác
   const navigateTo = (tab) => {
     setActiveTab(tab);
   };
@@ -102,14 +84,14 @@ const BottomNavigationPage = () => {
         onChange={(key) => navigateTo(key)}
       >
         <BottomNavigation.Item
-          key="home"
+          key="home/index"
           label="Trang chủ"
           icon={<Icon size={28} icon="zi-home" />}
           activeIcon={<Icon size={28} icon="zi-home" />}
           onClick={navigate_home}
         />
         <BottomNavigation.Item
-          key="tickets_list"
+          key="tickets/list"
           label="Tickets"
           icon={<Icon icon="zi-file" />}
           activeIcon={<Icon icon="zi-file" />}
@@ -146,13 +128,13 @@ const BottomNavigationPage = () => {
         />
       </BottomNavigation>
 
-      {activeTab === "home" && (
+      {activeTab === "home/index" && (
         <HomePage onIsGetDataChange={handleIsGetDataChange} />
       )}
-      {activeTab === "tickets_list" && <SearchPage />}
-      {activeTab === "create_ticket" && <CreateTicketPage />}
+      {activeTab === "tickets/list" && <TicketsListPage />}
+      {activeTab === "tickets/save" && <CreateTicketPage />}
       {activeTab === "about_us" && <MyAccountPage />}
-      <Modal visible={followOAModal}>
+      <Modal visible={activatedAccount}>
         <img
           style={{
             width: "100px",
@@ -202,7 +184,7 @@ const BottomNavigationPage = () => {
             }}
             size="medium"
             onClick={() => {
-              setFollowOAModal(false);
+              setActivatedAccount(false);
             }}
           >
             Từ chối
@@ -216,7 +198,7 @@ const BottomNavigationPage = () => {
             }}
             size="medium"
             onClick={() => {
-              setFollowOAModal(false);
+              setActivatedAccount(false);
             }}
           >
             Đã hiểu

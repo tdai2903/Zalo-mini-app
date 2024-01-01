@@ -13,12 +13,10 @@ import {
 import { useSnackbar } from "zmp-ui";
 import url_api from "../const";
 import secret_key from "../const";
-
 import {
   resState,
   userInfoState,
   offsetState,
-  getNewsState,
 } from "../states_recoil/states_recoil";
 
 export const useService = () => {
@@ -43,7 +41,7 @@ export const useService = () => {
   /**
    * config header mini app
    */
-  const configView = async () => {
+  const configView = async (title, type) => {
     try {
       await configAppView({
         headerColor: "#006AF5",
@@ -51,8 +49,8 @@ export const useService = () => {
         hideAndroidBottomNavigationBar: true,
         hideIOSSafeAreaBottom: true,
         actionBar: {
-          title: "My CloudGO",
-          leftButton: "none",
+          title: title,
+          leftButton: type,
         },
       });
     } catch (error) {}
@@ -61,10 +59,10 @@ export const useService = () => {
   /**
    * hide left button header
    */
-  const setLeftButton = async () => {
+  const setLeftButton = async (type) => {
     try {
       await setNavigationBarLeftButton({
-        type: "none",
+        type: type,
       });
     } catch (error) {
       // xử lý khi gọi api thất bại
@@ -192,6 +190,9 @@ export const useService = () => {
     ticketStatus
   ) => {
     try {
+      if (offset === undefined) {
+        return;
+      }
       const headers = {
         "Content-Type": "application/json",
       };

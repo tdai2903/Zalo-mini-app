@@ -1,8 +1,9 @@
 // recoilAtoms.js
 import { atom } from "recoil";
+import { TicketType } from "../type";
 
 // global list tickets
-export const resState = atom({
+export const resState = atom<TicketType[]>({
   key: "resState",
   default: [],
 });

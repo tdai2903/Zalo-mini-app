@@ -67,7 +67,7 @@ const TicketItem = ({
             flex: 2,
           }}
           onClick={() => {
-            navigate(`/detail_ticket/${ticket.ticketid}`, {
+            navigate(`/tickets/detail/${ticket.ticketid}`, {
               state: { ...ticket },
             });
           }}

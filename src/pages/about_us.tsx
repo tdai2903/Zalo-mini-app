@@ -1,42 +1,48 @@
 import React, { useEffect } from "react";
 import { Box, Icon, Page, Text } from "zmp-ui";
-import {
-  configAppView,
-  openWebview,
-  setNavigationBarLeftButton,
-} from "zmp-sdk/apis";
+import { openWebview } from "zmp-sdk/apis";
 import { openPhone } from "zmp-sdk/apis";
+import { useService } from "../functions/common";
 const AboutUsPage: React.FunctionComponent = () => {
-  const aboutCloudgo = async () => {
+  const { configView, setLeftButton } = useService();
+
+  // Hàm mở webview
+  const openWebviewWithConfig = async (url) => {
     try {
       await openWebview({
-        url: "https://cloudgo.vn/",
+        url,
         config: {
           style: "normal",
           leftButton: "back",
         },
       });
     } catch (error) {
-      // xử lý khi gọi api thất bại
+      // Xử lý khi gọi API thất bại
       console.log(error);
     }
   };
 
-  const fanpageFacebook = async () => {
-    try {
-      await openWebview({
-        url: "https://www.facebook.com/cloudgovn",
-        config: {
-          style: "normal",
-          leftButton: "back",
-        },
-      });
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
+  // Mở webview về trang chủ CloudGO
+  const aboutCloudgo = () => {
+    openWebviewWithConfig("https://cloudgo.vn/");
   };
 
+  // Mở webview fanpageFacebook CloudGO
+  const fanpageFacebook = () => {
+    openWebviewWithConfig("https://www.facebook.com/cloudgovn");
+  };
+
+  // Mở webview youtube CloudGO
+  const youtube = () => {
+    openWebviewWithConfig("https://www.youtube.com/@cloudgovn");
+  };
+
+  // Mở webview về trang hỗ trợ sử dụng CloudGO
+  const SpCloudGo = () => {
+    openWebviewWithConfig("https://docs.cloudgo.vn/");
+  };
+
+  // APi Zalo open openCallScreen
   const openCallScreen = async () => {
     try {
       await openPhone({
@@ -48,84 +54,9 @@ const AboutUsPage: React.FunctionComponent = () => {
     }
   };
 
-  const youtube = async () => {
-    try {
-      await openWebview({
-        url: "https://www.youtube.com/@cloudgovn",
-        config: {
-          style: "normal",
-          leftButton: "back",
-        },
-      });
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
-  const SpCloudGo = async () => {
-    try {
-      await openWebview({
-        url: "https://docs.cloudgo.vn/",
-        config: {
-          style: "normal",
-          leftButton: "back",
-        },
-      });
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
-  const SpCloudPro = async () => {
-    try {
-      await openWebview({
-        url: "https://docs.cloudpro.vn/",
-        config: {
-          style: "normal",
-          leftButton: "back",
-        },
-      });
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
-  const configView = async () => {
-    try {
-      await configAppView({
-        headerColor: "#006AF5",
-        headerTextColor: "white",
-        hideAndroidBottomNavigationBar: true,
-        hideIOSSafeAreaBottom: true,
-        actionBar: {
-          title: "My CloudGO",
-          leftButton: "none",
-        },
-      });
-      // xử lý khi gọi api thành công
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-    }
-  };
-
-  const setLeftButton = async () => {
-    try {
-      await setNavigationBarLeftButton({
-        type: "none",
-      });
-      console.log("Đã ẩn leftButton");
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
-    configView();
-    setLeftButton();
+    configView("My CloudGO", "none");
+    setLeftButton("none");
   }, []);
 
   return (

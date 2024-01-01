@@ -1,15 +1,18 @@
 import React, { useEffect } from "react";
 import { Box, Button, Page, Text, useNavigate } from "zmp-ui";
-import {
-  configAppView,
-  getUserInfo,
-  setNavigationBarLeftButton,
-} from "zmp-sdk/apis";
+import { getUserInfo } from "zmp-sdk/apis";
 import { followOA, requestSendNotification } from "zmp-sdk";
 import confirmImg from "/assets-src/createticket.png";
+import { useService } from "../../functions/common";
 
 const ConfirmTicketPage: React.FunctionComponent = () => {
+  // Sử dụng function từ common.ts
+  const { configView, setLeftButton } = useService();
+
+  // Navigation
   const navigate = useNavigate();
+
+  // API Follow OA Zalo
   const followZaloOA = async () => {
     try {
       // Lấy thông tin người dùng
@@ -21,72 +24,27 @@ const ConfirmTicketPage: React.FunctionComponent = () => {
         await followOA({
           id: "2197174064623873199",
         });
-
-        console.log("Đã thực hiện theo dõi OA thành công.");
       } else {
-        console.log("Người dùng đã theo dõi OA.");
       }
       navigate("/main", { replace: true });
-    } catch (error) {
-      console.error("Lỗi khi kiểm tra và thực hiện theo dõi OA:", error);
-    }
+    } catch (error) {}
   };
 
+  // API cho phép mini app gửi thông báo đến người dùng
   const sendNotification = async () => {
     try {
       await requestSendNotification({});
-      navigate("/main", { replace: true });
+      navigate("/bottom_navigation", { replace: true });
     } catch (error) {
       // xử lý khi gọi api thất bại
       console.log(error);
     }
   };
 
-  const configView = async () => {
-    try {
-      await configAppView({
-        headerColor: "#006AF5",
-        headerTextColor: "white",
-        hideAndroidBottomNavigationBar: true,
-        hideIOSSafeAreaBottom: true,
-        actionBar: {
-          title: "My CloudGO",
-          leftButton: "none",
-        },
-      });
-      // xử lý khi gọi api thành công
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-    }
-  };
-
-  const setLeftButton = async () => {
-    try {
-      await setNavigationBarLeftButton({
-        type: "none",
-      });
-      console.log("Đã ẩn leftButton");
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
-  // const followZaloOA = async () => {
-  //   try {
-  //     await followOA({
-  //       id: "2197174064623873199",
-  //     });
-  //     navigate("/main", { replace: true });
-  //   } catch (error) {
-  //     // xử lý khi gọi api thất bại
-  //     console.log(error);
-  //   }
-  // };
-
+  // Gọi API điều chỉnh header từ API zalo
   useEffect(() => {
-    configView();
-    setLeftButton();
+    configView("My CloudGO", "back");
+    setLeftButton("back");
   }, []);
 
   return (
@@ -143,7 +101,7 @@ const ConfirmTicketPage: React.FunctionComponent = () => {
         variant="tertiary"
         type="neutral"
         fullWidth
-        onClick={() => navigate("/main", { replace: true })}
+        onClick={() => navigate("/bottom_navigation", { replace: true })}
       >
         Để sau
       </Button>

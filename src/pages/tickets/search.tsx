@@ -27,12 +27,18 @@ const SearchPage: React.FunctionComponent = () => {
   // Chạy api config header và get ticket list trước tiên
   useEffect(() => {
     configView("My CloudGO", "back");
-    fetchTickets("", "test", profile.data?.id, profile.data?.account_id, "");
   }, []);
 
   // Hàm input value khi search
   const handleSearchInputChange = (e) => {
-    fetchTickets("", "test", profile.data?.id, profile.data?.account_id, "");
+    fetchTickets(
+      "",
+      "",
+      "test",
+      profile.data?.id,
+      profile.data?.account_id,
+      ""
+    );
     const inputText = e.target.value;
     setSearchText(inputText);
   };

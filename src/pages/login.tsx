@@ -4,7 +4,7 @@ import { Box, Button, Text, Page, useNavigate, useSnackbar } from "zmp-ui";
 import { configAppView } from "zmp-sdk/apis";
 import loginImg from "/assets-src/login.png";
 import logo from "/assets-src/cloudgo-logo.png";
-import url_api from "../service";
+import { url_api } from "../const";
 const LoginPage = () => {
   const navigate = useNavigate();
   const { openSnackbar, closeSnackbar } = useSnackbar();

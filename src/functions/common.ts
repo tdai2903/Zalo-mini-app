@@ -11,24 +11,41 @@ import {
   setNavigationBarLeftButton,
 } from "zmp-sdk";
 import { useSnackbar } from "zmp-ui";
-import url_api from "../const";
-import secret_key from "../const";
+import { url_api, secret_key } from "../const";
 import {
   resState,
   userInfoState,
   offsetState,
+  isGetDataState,
+  allTicketState,
+  openTicketState,
+  processTicketState,
+  closedTicketState,
+  cancelTicketState,
+  followTicketState,
 } from "../states_recoil/states_recoil";
+import { TicketType } from "../type";
 
 export const useService = () => {
   const navigate = useNavigate();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [offset, setOffSet] = useRecoilState(offsetState);
-  const [res, setRes] = useRecoilState<never[]>(resState);
+  const [isGetData, setIsGetData] = useRecoilState(isGetDataState);
+  const [res, setRes] = useRecoilState(resState);
+  const [currentTab, setCurrentTab] = useState("tab1");
   const { openSnackbar } = useSnackbar();
   const token = localStorage.getItem("token");
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [screenHeight, setScreenHeight] = useState(window.innerHeight);
   const [userInfo, setUserInfo] = useRecoilState(userInfoState);
+  const [allTickets, setAllTickets] = useRecoilState(allTicketState);
+  const [openTicketTickets, setOpenTicketTickets] =
+    useRecoilState(openTicketState);
+  const [processTickets, setProcessTickets] =
+    useRecoilState(processTicketState);
+  const [closedTickets, setClosedTickets] = useRecoilState(closedTicketState);
+  const [cancelTickets, setCancelTickets] = useRecoilState(cancelTicketState);
+  const [followTickets, setFollowTicket] = useRecoilState(followTicketState);
 
   /**
    * Lấy witdh, height theo màn hình
@@ -79,7 +96,6 @@ export const useService = () => {
   const getAccessTokenAndPhoneNumber = async () => {
     try {
       accessToken = await getAccessToken({});
-
       /* Gọi hàm get phone number khi lấy accessToken thành công */
       handleGetPhoneNumber(accessToken);
     } catch (error) {
@@ -99,11 +115,7 @@ export const useService = () => {
         let { token } = data;
         tokenPhone = token;
 
-        // others
-
-        // convert phone
-        convertPhone(accessToken);
-
+        console.log("token phone number:", tokenPhone);
         // get api user info from zalo api
         getUserInfo({
           success: (userInfoResponse) => {
@@ -129,6 +141,9 @@ export const useService = () => {
             console.log("Lỗi khi gọi userInfo", error);
           },
         });
+
+        // convert phone
+        convertPhone(accessToken);
       },
       fail: (error) => {
         console.log("Lỗi khi getphonenumber", error);
@@ -151,7 +166,6 @@ export const useService = () => {
     if (token !== null) {
       headers["token"] = token;
     }
-
     axios
       .post(
         url_api,
@@ -170,6 +184,7 @@ export const useService = () => {
       .then((response) => {
         const phoneNumber = response.data.data.number;
         setPhoneNumber(phoneNumber);
+        console.log("Số điện thoại của bạn:", phoneNumber);
       })
       .catch((error) => {
         console.error("Lỗi khi lấy sdt:", error);
@@ -185,14 +200,19 @@ export const useService = () => {
   const fetchTickets = async (
     tabKey,
     keyword,
+    starred,
     contactId,
     account_id,
     ticketStatus
   ) => {
     try {
-      if (offset === undefined) {
-        return;
-      }
+      // if (offset === undefined) {
+      //   console.log("abcbb");
+      //   setOffSet(0);
+      //   setRes({ entry_list: [], paging: { total_count: 0 } });
+      //   return;
+      // }
+
       const headers = {
         "Content-Type": "application/json",
       };
@@ -200,7 +220,6 @@ export const useService = () => {
       if (token !== null) {
         headers["token"] = token;
       }
-
       const response = await axios.post(
         url_api,
         JSON.stringify({
@@ -210,13 +229,14 @@ export const useService = () => {
             keyword: keyword,
             filters: {
               category: "",
+              starred: starred,
               contact_id: contactId,
               parent_id: account_id,
               ticketstatus: ticketStatus,
             },
             paging: {
               order_by: "",
-              offset: offset,
+              offset: currentTab == tabKey ? offset : 0,
               max_results: 10,
             },
             ordering: {
@@ -230,17 +250,56 @@ export const useService = () => {
           headers: headers,
         }
       );
-
+      const ListData = response.data.data;
+      setCurrentTab(tabKey);
       const offsetNumber = response.data.data.paging.next_offset;
       setOffSet(offsetNumber);
-      console.log("Off set", offsetNumber);
-
       const json = response.data.data.entry_list as never[];
-      console.log("Danh sách ticket", json);
+      setRes({ entry_list: ListData.entry_list, paging: ListData.paging });
 
-      setRes(json);
-      const updatedTicketList = [...res, ...json];
-      setRes(updatedTicketList);
+      switch (tabKey) {
+        case "tab1":
+          setAllTickets({
+            entry_list: ListData.entry_list,
+            paging: ListData.paging,
+          });
+          break;
+        case "tab2":
+          setFollowTicket({
+            entry_list: ListData.entry_list,
+            paging: ListData.paging,
+          });
+          break;
+        case "tab3":
+          setOpenTicketTickets({
+            entry_list: ListData.entry_list,
+            paging: ListData.paging,
+          });
+          break;
+        case "tab4":
+          setProcessTickets({
+            entry_list: ListData.entry_list,
+            paging: ListData.paging,
+          });
+          break;
+        case "tab5":
+          setClosedTickets({
+            entry_list: ListData.entry_list,
+            paging: ListData.paging,
+          });
+          break;
+        case "tab6":
+          setCancelTickets({
+            entry_list: ListData.entry_list,
+            paging: ListData.paging,
+          });
+          break;
+        default:
+          break;
+      }
+
+      const updatedTicketList = [...res.entry_list, ...json];
+      setRes({ entry_list: updatedTicketList, paging: res.paging });
     } catch (error) {
       if (error === "SyntaxError: Unexpected token T in JSON at position 0") {
         navigate("/");
@@ -287,12 +346,12 @@ export const useService = () => {
       .then((response) => {
         //get profile user
         const profile = response.data.data;
-
+        setIsGetData(true);
         // save localStorage
         localStorage.setItem("profile", JSON.stringify(profile));
 
         //fetch danh sách ticket theo contact
-        fetchTickets("", "", profile.data.id, "", ["Open", "Wait Close"]);
+        fetchTickets("", "", "", profile.data.id, "", ["Open"]);
       })
       .catch((error) => {
         // add log to file

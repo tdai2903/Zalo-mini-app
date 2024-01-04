@@ -67,25 +67,40 @@ const TicketItem = ({
             flex: 2,
           }}
           onClick={() => {
-            navigate(`/tickets/detail/${ticket.ticketid}`, {
+            navigate(`/tickets/detail/detail/${ticket.ticketid}`, {
               state: { ...ticket },
             });
           }}
         >
-          <Text
-            style={{
-              width: "95%",
-              color: "rgba(20, 20, 21, 1)",
-              fontWeight: 500,
-              whiteSpace: "normal", // Đặt về "normal" để cho phép ngắt dòng tự động
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: 2, // Hiển thị tối đa 2 dòng
-              overflow: "hidden",
-            }}
-          >
-            [{translationStatus[ticket.category]}] {ticket.title}
-          </Text>
+          <Box flexDirection="row" alignContent="center">
+            <Text
+              style={{
+                color:
+                  ticket.category === "Bug"
+                    ? "red"
+                    : ticket.category === "Feedback"
+                    ? "green"
+                    : "rgba(20, 20, 21, 1)",
+                fontWeight: 500,
+              }}
+            >
+              [{translationStatus[ticket.category]}]
+            </Text>
+            <Text
+              style={{
+                paddingLeft: "4px",
+                color: "rgba(20, 20, 21, 1)",
+                fontWeight: 500,
+                whiteSpace: "normal", // Đặt về "normal" để cho phép ngắt dòng tự động
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2, // Hiển thị tối đa 2 dòng
+                overflow: "hidden",
+              }}
+            >
+              {ticket.title}
+            </Text>
+          </Box>
 
           <Box
             mt={1}

@@ -14,62 +14,59 @@ import {
 } from "zmp-ui";
 import { getSystemInfo, openOutApp } from "zmp-sdk";
 import { openShareSheet, openWebview } from "zmp-sdk/apis";
-import url_api from "../../const";
+import { url_api, site_pms, site_cloudwork } from "../../../const";
 import ImageViewer from "react-simple-image-viewer";
 import { useLocation, useNavigate } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import PullToRefresh from "react-simple-pull-to-refresh";
 import axios from "axios";
-import { CommentType, RatingType } from "../../type";
-import { useService } from "../../functions/common";
+import { CommentType, RatingType } from "../../../type";
+import { useService } from "../../../functions/common";
 
 const DetailTicketPage: React.FunctionComponent = () => {
-  /**
-   * Sử dụng function follow từ common.ts
-   */
-  const { followTicket } = useService();
-  const location = useLocation(); 
-  const navigate = useNavigate(); 
-  const commentInputRef = useRef<HTMLTextAreaElement>(null);
-  const { openSnackbar } = useSnackbar();
-  const ticket = location.state;
-  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
-  const Detail = JSON.parse(localStorage.getItem("detail_ticket") || "{}");
-  const [lineClamp, setLineClamp] = useState(3);
-  const [pickImage, setPickImage] = useState(0);
-  const [isPickImage, setIsPickImage] = useState(false);
-  const [currentImage, setCurrentImage] = useState(0);
-  const [isViewerOpen, setIsViewerOpen] = useState(false);
-  const [imagesComment, setImagesComment] = useState(0);
-  const [isViewerOpenComment, setIsViewerOpenComment] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [selectedComment, setSelectedComment] = useState<string | null>(null);
-  const [selectedImagesComment, setSelectedImagesComment] = useState(null);
-  const [visibleImages, setVisibleImages] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isTicketReopened, setIsTicketReopened] = useState(false);
-  const [isTicketCanceled, setIsTicketCanceled] = useState(false);
-  const [isTicketClosed, setIsTicketClosed] = useState(false);
-  const [isCusConfirm, setIsCusConfirm] = useState(false);
-  const [visible, setVisible] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [showReOpenModal, setShowReOpenModal] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [sheetVisible, setSheetVisible] = useState(false);
-  const [actionSheetVisible, setActionSheetVisible] = useState(false);
-  const [currentTab, setCurrentTab] = useState("tab1");
-  const [comments, setComments] = useState<CommentType[]>([]);
-  const [commentCount, setCommentCount] = useState(0);
-  const [replyToComment, setReplyToComment] = useState<string | null>(null);
-  const token = localStorage.getItem("token");
-  const [isStarred, setIsStarred] = useState(ticket.starred === "1");
-  const [ratingText, setRatingText] = useState("(Chọn để đánh giá)");
+  const { followTicket } = useService(); //Sử dụng function follow từ common.ts
+  const location = useLocation();
+  const navigate = useNavigate();
+  const commentInputRef = useRef<HTMLTextAreaElement>(null); // tham chiếu đến Input.TextArea
+  const { openSnackbar } = useSnackbar(); // alert hiển thị khi tương tác
+  const ticket = location.state; // sử dụng state ticket từ location
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}"); // sử dụng userInfo từ localStorage
+  const Detail = JSON.parse(localStorage.getItem("detail_ticket") || "{}"); // sử dụng detail ticket từ localStorage
+  const [lineClamp, setLineClamp] = useState(3); // cho phép hiển thị tối đa 3 dòng
+  const [pickImage, setPickImage] = useState(0); // set state index khi preview image
+  const [isPickImage, setIsPickImage] = useState(false); // set state khi đang preview image
+  const [currentImage, setCurrentImage] = useState(0); // set state current image ở thông tin hình ảnh
+  const [isViewerOpen, setIsViewerOpen] = useState(false); // set state khi đang preview image ở thông tin hình ảnh
+  const [imagesComment, setImagesComment] = useState(0); // set state index image ở bình luận
+  const [isViewerOpenComment, setIsViewerOpenComment] = useState(false); // set state khi đang preview image ở bình luận
+  const [isRefreshing, setIsRefreshing] = useState(false); // state khi refresh app
+  const [selectedImages, setSelectedImages] = useState<File[]>([]); // state select image khi upload file
+  const [selectedComment, setSelectedComment] = useState<string | null>(null); // state select comment
+  const [selectedImagesComment, setSelectedImagesComment] = useState(null); // state select image khi upload file ở comment đó
+  const [visibleImages, setVisibleImages] = useState<string[]>([]); // visibleImages khi đã send comment
+  const fileInputRef = useRef<HTMLInputElement | null>(null); // tham chiếu đến comment đó khi đính kèm
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]); // state khi upload file
+  const [isLoading, setIsLoading] = useState(false); // state loading khi refresh app
+  const [isTicketReopened, setIsTicketReopened] = useState(false); // state button khi ticket được mở lại ticket
+  const [isTicketCanceled, setIsTicketCanceled] = useState(false); // state button khi ticket được hủy ticket
+  const [isTicketClosed, setIsTicketClosed] = useState(false); // state button khi ticket được đóng ticket
+  const [isCusConfirm, setIsCusConfirm] = useState(false); // state button khi ticket được xác nhận ticket
+  const [visible, setVisible] = useState(false); // đóng image khi người dùng delete trong khi đang upload
+  const [activeIndex, setActiveIndex] = useState(0); // set state index file
+  const [showRatingModal, setShowRatingModal] = useState(false); // hiện thị modal khi người dùng đánh giá tikcet
+  const [showReOpenModal, setShowReOpenModal] = useState(false); // hiện thị modal khi người dùng mở lại ticket
+  const [showCancelModal, setShowCancelModal] = useState(false); // hiện thị modal khi người dùng hủy ticket
+  const [showConfirmModal, setShowConfirmModal] = useState(false); // hiện thị modal khi người dùng xác nhận ticket
+  const [sheetVisible, setSheetVisible] = useState(false); // hiển thị sheet khi xem thêm mô tả
+  const [actionSheetVisible, setActionSheetVisible] = useState(false); // hiển thị sheet khi xem thêm giải pháp
+  const [currentTab, setCurrentTab] = useState("tab1"); // set current tab là tab 1
+  const [comments, setComments] = useState<CommentType[]>([]); // set state khi comment
+  const [commentCount, setCommentCount] = useState(0); // đếm số lượng comment đang có
+  const [replyToComment, setReplyToComment] = useState<string | null>(null); // set state khi reply comment
+  const token = localStorage.getItem("token"); // lấy token crm từ localStorage
+  const [isStarred, setIsStarred] = useState(ticket.starred === "1"); // set state khi ticket đang được follow
+  const [ratingText, setRatingText] = useState("(Chọn để đánh giá)"); // state text khi rating
   const [boxStates, setBoxStates] = useState({
     ticketInfo: true,
     contactInfo: true,
@@ -77,15 +74,15 @@ const DetailTicketPage: React.FunctionComponent = () => {
     imagesInfo: true,
     solutionInfo: true,
     ratingInfo: true,
-  });
+  }); // state ẩn hay hiển thị block ở chi tiết ticket
   const initialTicketState: RatingType = {
     helpdesk_rating: 0,
     rating_description: "",
-  };
+  }; // state initRating
   const [newRating, setNewRating] = React.useState<RatingType>({
     ...initialTicketState,
-  });
-  const { configView, setLeftButton } = useService();
+  }); // set state khi rating
+  const { configView, setLeftButton } = useService(); // sử dụng functions ở common.ts
   const initialCommentState: CommentType = {
     related_to: "",
     commentcontent: "",
@@ -99,7 +96,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
     name: "",
     userid: "",
     id: "",
-  };
+  }; // init state comment ticket
 
   /**
    * State color icon khi đánh giá
@@ -173,7 +170,6 @@ const DetailTicketPage: React.FunctionComponent = () => {
     setImagesComment(index);
     setIsViewerOpenComment(true);
     setSelectedImagesComment(comment);
-    console.log("đã gọi imageviewer comment");
   }, []);
 
   /**
@@ -205,7 +201,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
    */
   const listImages = Detail.data?.imagename_path
     ? Object.entries(Detail.data?.imagename_path).map(
-        ([id, path]) => `https://pms-dev.cloudpro.vn${path}`
+        ([id, path]) => `${site_pms}${path}`
       )
     : [];
 
@@ -217,11 +213,11 @@ const DetailTicketPage: React.FunctionComponent = () => {
     try {
       if (getSystemInfo().platform === "android") {
         openOutApp({
-          url: `https://pms-dev.cloudpro.vn/${imagePath}`,
+          url: `${site_pms}${imagePath}`,
         });
       } else {
         await openWebview({
-          url: `https://pms-dev.cloudpro.vn/${imagePath}`,
+          url: `${site_pms}${imagePath}`,
           config: {
             style: "bottomSheet",
             leftButton: "back",
@@ -273,7 +269,6 @@ const DetailTicketPage: React.FunctionComponent = () => {
           path: `${location.pathname}${location.search}`,
         },
       });
-      console.log("share ");
       console.log(location);
     } catch (err) {}
   };
@@ -406,6 +401,8 @@ const DetailTicketPage: React.FunctionComponent = () => {
         });
         detailTickets();
         setNewRating(initialTicketState);
+        // let resV2 = { ...res.data, ticketstatus: status };
+        // setRes({ data: resV2 });
       })
       .catch((error) => {
         console.error("Lỗi khi đánh giá:", error);
@@ -624,7 +621,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
     }
 
     axios
-      .post("https://pms-dev.cloudpro.vn/api/CloudWorkApi.php", formData, {
+      .post(site_cloudwork, formData, {
         headers: headers,
       })
       .then((response) => {
@@ -646,7 +643,6 @@ const DetailTicketPage: React.FunctionComponent = () => {
         console.error("Lỗi khi gửi bình luận:", error);
       });
   };
-
   const submitReply = (comment) => {
     openSnackbar({
       text: "Đang gửi trả lời bình luận...",
@@ -673,7 +669,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
     }
 
     axios
-      .post("https://pms-dev.cloudpro.vn/api/CloudWorkApi.php", formData, {
+      .post(site_cloudwork, formData, {
         headers: headers,
       })
       .then((response) => {
@@ -702,25 +698,23 @@ const DetailTicketPage: React.FunctionComponent = () => {
   const getTimeAgo = (timestamp) => {
     const currentTime = new Date();
     const commentTime = new Date(timestamp);
-    const timeDifference = currentTime.getTime() - commentTime.getTime();
 
+    // Kiểm tra nếu timestamp không hợp lệ (NaN)
+    if (isNaN(commentTime.getTime())) {
+      return "Thời gian không hợp lệ";
+    }
+
+    const timeDifference = currentTime.getTime() - commentTime.getTime();
     const minutes = Math.floor(timeDifference / 60000);
-    console.log("hiện tại", currentTime);
-    console.log(" comment hiện tại", commentTime);
-    console.log("time", timeDifference);
 
     if (minutes < 1) {
       return "Vừa xong";
     } else if (minutes < 60) {
-      console.log("phút", minutes);
-
       return `${minutes.toString()} phút trước`;
     } else {
       const hours = Math.floor(minutes / 60);
 
       if (hours < 24) {
-        console.log("giờ", hours);
-
         return `${hours} giờ trước`;
       } else {
         const days = Math.floor(hours / 24);
@@ -1445,7 +1439,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
                                       cursor: "pointer",
                                     }}
                                     onClick={() => openImageViewers(index)}
-                                    src={`https://pms-dev.cloudpro.vn${imagePath}`}
+                                    src={`${site_pms}${imagePath}`}
                                     alt={`Hình ảnh ${index + 1}`}
                                   />
                                 )}
@@ -1466,7 +1460,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
                               }}
                             >
                               <img
-                                src={`https://pms-dev.cloudpro.vn${
+                                src={`${site_pms}${
                                   Object.entries(res.data.imagename_path)[3][1]
                                 }`}
                                 alt={`Hình ảnh 4`}
@@ -1951,36 +1945,6 @@ const DetailTicketPage: React.FunctionComponent = () => {
                         </Button>
                       </>
                     )}
-
-                  {/* {!isCusConfirm &&
-                    (ticket.status === "Wait For Verifying" ||
-                      ticket.status === "Sent Confirm Email") && (
-                      <>
-                        <Button
-                          variant="tertiary"
-                          style={{
-                            width: "48%",
-                            borderRadius: "8px",
-                            border: "1px rgba(0, 106, 245, 1) solid ",
-                          }}
-                          size="medium"
-                          onClick={() => {
-                            setShowCancelModal(true);
-                          }}
-                        >
-                          Hủy
-                        </Button>
-                        <Button
-                          style={{ width: "48%", borderRadius: "8px" }}
-                          size="medium"
-                          onClick={() => {
-                            setShowConfirmModal(true);
-                          }}
-                        >
-                          Xác nhận
-                        </Button>
-                      </>
-                    )} */}
 
                   {!isTicketReopened &&
                     (isTicketClosed ||

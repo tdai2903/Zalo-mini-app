@@ -3,7 +3,7 @@ import { Route } from "react-router-dom";
 import { App, ZMPRouter, AnimationRoutes, SnackbarProvider } from "zmp-ui";
 import { RecoilRoot } from "recoil";
 import HomePage from "../pages/home/index";
-import DetailTicketPage from "../pages/tickets/detail";
+import DetailTicketPage from "../pages/tickets/detail/detail";
 import SearchPage from "../pages/tickets/search";
 import DetailAccountPage from "../pages/profiles/index";
 import LoginPage from "../pages/login";
@@ -29,7 +29,7 @@ const MyApp = () => {
               <Route path="/ticket" element={<TicketItem />} />
               <Route path="/tickets/list" element={<TicketsListPage />} />
               <Route
-                path="/tickets/detail/:id"
+                path="/tickets/detail/detail/:id"
                 element={<DetailTicketPage />}
               />
               <Route path="/tickets/save" element={<SaveTicketPage />} />

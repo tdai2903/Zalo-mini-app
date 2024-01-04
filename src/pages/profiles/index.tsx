@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Box, Button, Input, Page, Text, useSnackbar, Avatar } from "zmp-ui";
 import { ContactType } from "../../type";
-import url_api from "../../service";
+import { url_api } from "../../const";
 import { useService } from "../../functions/common";
 
 const DetailAccountPage = () => {
   const { configView, setLeftButton } = useService();
   const { openSnackbar } = useSnackbar(); // hiển thị alert từ zalo api
-  const contactData = JSON.parse(localStorage.getItem("contact") || "{}"); // lấy contactData từ localStorage
+  const contactData = JSON.parse(localStorage.getItem("profile") || "{}"); // lấy contactData từ localStorage
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}"); // lấy userInfo từ localStorage
   const token = localStorage.getItem("token"); // lấy tokenapi pms-dev từ localStorage
   const [emailInput, setEmailInput] = useState(""); // state input email
@@ -137,19 +137,6 @@ const DetailAccountPage = () => {
             </Box>
           </Box>
         </Box>
-
-        <Box mt={3}>
-          <Text style={{ fontSize: "14px" }}>Di động</Text>
-          <Input
-            style={{
-              backgroundColor: "rgba(244, 245, 246, 1)",
-            }}
-            type="text"
-            disabled
-            defaultValue={contactData.data?.mobile.replace(/^84/, "0") || ""}
-          />
-        </Box>
-
         <Box mt={3}>
           <Text style={{ fontSize: "14px" }}>Email</Text>
           <Input
@@ -172,6 +159,17 @@ const DetailAccountPage = () => {
             }}
             errorText={errorText}
             status={status}
+          />
+        </Box>
+        <Box mt={3}>
+          <Text style={{ fontSize: "14px" }}>Di động</Text>
+          <Input
+            style={{
+              backgroundColor: "rgba(244, 245, 246, 1)",
+            }}
+            type="text"
+            disabled
+            defaultValue={contactData.data?.mobile.replace(/^84/, "0") || ""}
           />
         </Box>
 

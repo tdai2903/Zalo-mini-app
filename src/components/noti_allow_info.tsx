@@ -30,7 +30,7 @@ const ActivatedAccountModal = ({ visible, onClose, onClick }) => {
       <Text
         style={{
           fontWeight: 500,
-          fontSize: "14px",
+          fontSize: "12px",
           color: "rgba(118, 122, 127, 1)",
           paddingBottom: "32px",
           textAlign: "center",
@@ -55,7 +55,7 @@ const ActivatedAccountModal = ({ visible, onClose, onClick }) => {
           }}
           size="medium"
           onClick={() => {
-            onClose;
+            onClose();
           }}
         >
           Từ chối
@@ -69,7 +69,7 @@ const ActivatedAccountModal = ({ visible, onClose, onClick }) => {
           }}
           size="medium"
           onClick={() => {
-            onClick;
+            onClick();
           }}
         >
           Đã hiểu

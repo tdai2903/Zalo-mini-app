@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Page, useNavigate, Box, Text, Button, Modal } from "zmp-ui";
+import { Page, useNavigate, Box, Text, Button } from "zmp-ui";
 import { NewsType, TicketType } from "../../type";
-import iconcloudgo from "/assets-src/icon-cloudgo.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -70,25 +69,35 @@ const HomePage = ({ onIsGetDataChange }) => {
     setLeftButton,
     fetchNews,
     fetchTickets,
+    followTicket,
   } = useService();
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        /* Gọi hàm để lấy access token và số điện thoại */
+        await getAccessTokenAndPhoneNumber();
+
+        /* Gọi các hàm khác ở đây nếu cần */
+
+        /*chuyển trạng thái loading false sau khi get được contact*/
+        setTimeout(() => {
+          setIsRefreshing(false);
+          setLoading(false);
+          setLoadToApp(false);
+        }, 1000);
+      } catch (error) {
+        /* Xử lý lỗi nếu có */
+        console.error("Error fetching data:", error);
+      }
+    };
     /*gọi api zalo edit header */
     configView("My CloudGO", "none");
 
     /*gọi api ẩn left button header */
     setLeftButton("none");
 
-    /* Gọi hàm để lấy access token và số điện thoại */
-    getAccessTokenAndPhoneNumber();
-
-    /*chuyển trạng thái loading false sau khi get được contact*/
-    setTimeout(() => {
-      setIsRefreshing(false);
-      setLoading(false);
-      setLoadToApp(false);
-      setIsGetData(true);
-    }, 1000);
+    fetchData();
   }, []);
 
   /**
@@ -136,7 +145,7 @@ const HomePage = ({ onIsGetDataChange }) => {
       setLoadingMore(true);
 
       setTimeout(() => {
-        fetchTickets("", "", profile.data?.id, "", ["Open"]);
+        fetchTickets("", "", "", profile.data?.id, "", ["Open"]);
         setIsLoading(false);
         setLoadingMore(false);
       }, 2000);
@@ -147,12 +156,10 @@ const HomePage = ({ onIsGetDataChange }) => {
    * check nếu height của danh sách ticket đã tối đa thì gọi handleShowAllTickets
    */
   const handleScroll = () => {
-    if (
-      window.innerHeight + window.scrollY >= document.body.offsetHeight &&
-      !loadingMore &&
-      offset !== undefined
-    ) {
-      handleShowAllTickets();
+    if (!loadingMore && offset !== undefined) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        handleShowAllTickets();
+      }
     }
   };
 
@@ -162,20 +169,22 @@ const HomePage = ({ onIsGetDataChange }) => {
    */
   const handleReload = () => {
     fetchNews();
-    getAccessTokenAndPhoneNumber();
+    fetchTickets("", "", "", profile.data.id, "", ["Open"]);
   };
 
   /**
    * gọi hàm này để refresh app
    */
   const handleRefresh = async () => {
+    setOffset(0);
+    setRes({ entry_list: [], paging: { total_count: 0 } });
     setIsRefreshing(true);
     setLoading(true);
     setTimeout(() => {
       handleReload();
       setIsRefreshing(false);
       setLoading(false);
-    }, 1000);
+    }, 1500);
   };
 
   return (
@@ -265,12 +274,12 @@ const HomePage = ({ onIsGetDataChange }) => {
         )}
         {!loadToApp &&
           (isGetData ? (
-            res.length === 0 ? (
+            res.entry_list.length === 0 || res.entry_list.length == 0 ? (
               // Component hiển thị ticket đang trống
               <TicketEmpty />
             ) : (
               /* Component danh sách ticket */
-              res.map((ticket: TicketType) => (
+              res.entry_list.map((ticket: TicketType) => (
                 <TicketItem
                   key={ticket.ticketid}
                   ticket={ticket}
@@ -279,7 +288,7 @@ const HomePage = ({ onIsGetDataChange }) => {
                   statusTextColors={statusTextColors}
                   formatCreatedTime={formatCreatedTime}
                   navigate={navigate}
-                  followTicket={service.followTicket}
+                  followTicket={followTicket}
                   setRes={setRes}
                 />
               ))
@@ -329,12 +338,14 @@ const HomePage = ({ onIsGetDataChange }) => {
         )}
         <Box height={120}></Box>
         <ActivatedAccountModal
-          visible={activated}
+          visible={activated || getAccessTokenModal}
           onClose={() => {
             setActivated(false);
+            setGetAccessTokenModal(false);
           }}
           onClick={() => {
             getAccessTokenAndPhoneNumber();
+            setGetAccessTokenModal(false);
             setActivated(false);
           }}
         />

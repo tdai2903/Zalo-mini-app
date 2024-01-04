@@ -8,7 +8,6 @@ import {
   Input,
   Tabs,
   Button,
-  useSnackbar,
   Sheet,
   DatePicker,
 } from "zmp-ui";
@@ -23,491 +22,203 @@ import {
 } from "date-fns";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { configAppView } from "zmp-sdk/apis";
-import url_api from "../../service";
-import axios from "axios";
 import PullToRefresh from "react-simple-pull-to-refresh";
 import { useRecoilState } from "recoil";
 import {
-  loadingListState,
-  resCompanyState,
+  allTicketState,
+  cancelTicketState,
+  closedTicketState,
+  followTicketState,
+  offsetState,
+  openTicketState,
+  processTicketState,
+  resState,
   ticketListState,
 } from "../../states_recoil/states_recoil";
-import { setNavigationBarLeftButton } from "zmp-sdk";
 import TicketItem from "../../components/ticket";
 import TicketEmpty from "../../components/ticket_empty";
+import { useService } from "../../functions/common";
 const TicketsListPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
-  const [getData, setGetData] = useRecoilState(ticketListState);
-  const [res, setRes] = useRecoilState(resCompanyState);
-  const [isGetData, setIsGetData] = useState(false);
+  const [getData, setGetData] = useRecoilState(ticketListState); // global state check list data
+  const [allTickets, setAllTickets] = useRecoilState(allTicketState); // global state tất cả ticket
+  const [followTicketMe, setFollowTicketMe] = useRecoilState(followTicketState);
+  const [openTicketsMe, setOpenTicketsMe] = useRecoilState(openTicketState); // global state ticket có status = Open
+  const [processTicketsMe, setProcessTicketsMe] =
+    useRecoilState(processTicketState); // global state ticket có status = In Progress | Customer Confirmed | Assigned | Wait Close
+  const [closedTicketsMe, setClosedTicketsMe] =
+    useRecoilState(closedTicketState); // global state ticket có status = Closed
+  const [cancelTicketsMe, setCancelTicketsMe] =
+    useRecoilState(cancelTicketState); // global state ticket có status = Cancel
+  const [res, setRes] = useRecoilState(resState); // global state danh sách ticket từ data api get list ticket
   const [ticketByCompany, setTicketByCompany] = useState<TicketType[]>([]);
-  const [searchText, setSearchText] = useState("");
-  const [allTickets, setAllTickets] = useState<TicketType[]>([]);
-  const [filteredTicketsCount, setFilteredTicketsCount] = useState(0);
-  const [visibleTicketsCount, setVisibleTicketsCount] = useState(10);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filtering, setFiltering] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [filtered, setFiltered] = useState("");
-  const [loading, setLoading] = useRecoilState(loadingListState);
-  const { openSnackbar } = useSnackbar();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [showAllTickets, setShowAllTickets] = useState(false);
-  const contactData = JSON.parse(localStorage.getItem("contact") || "{}");
-  const token = localStorage.getItem("token");
-  const [sheetVisible, setSheetVisible] = useState(false);
-  const [actionSheetVisible, setActionSheetVisible] = useState(false);
-  const [loadingFilter, setLoadingFilter] = useState(false);
-  const [sortBy, setSortBy] = useState("newest");
-  const [sortedAndFilteredTickets, setSortedAndFilteredTickets] = useState<
-    TicketType[]
-  >([]);
+  const [isRefreshing, setIsRefreshing] = useState(false); // set state cho handleRefresh app
+  const [isLoading, setIsLoading] = useState(false); // state loading app
+  const [filtered, setFiltered] = useState(""); // set state value truyền vào khi filter theo today | thisWeek | thisMonth
+  const [loading, setLoading] = useState(false); // set state loading danh sách ticket
+  const contactData = JSON.parse(localStorage.getItem("profile") || "{}"); // get profile từ localStorage
+  const [sheetVisible, setSheetVisible] = useState(false); // state hiển thị sheet khi filter theo custom
+  const [loadingFilter, setLoadingFilter] = useState(false); //state loading khi filter
   const [sortedAndFilteredTicketsBackup, setSortedAndFilteredTicketsBackup] =
-    useState<TicketType[]>([]);
-  const [customDateVisible, setCustomDateVisible] = useState(false);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [selectedButton, setSelectedButton] = useState("");
-  const [closedTickets, setClosedTickets] = useState<TicketType[]>([]);
-  const [followTickets, setFollowTickets] = useState<TicketType[]>([]);
-  const [openTickets, setOpenTickets] = useState<TicketType[]>([]);
-  const [cancelTickets, setCancelTickets] = useState<TicketType[]>([]);
+    useState<TicketType[]>([]); // state chứa danh sách ticket tạm thời khi filter
+  const [customDateVisible, setCustomDateVisible] = useState(false); // state check filter có đang ở dạng custom date hay không?
+  const [startDate, setStartDate] = useState<Date | null>(null); // state check start date khi filter theo ngày đầu tiên
+  const [endDate, setEndDate] = useState<Date | null>(null); // state check end date khi filter đến ngày kết thúc
+  const [selectedButton, setSelectedButton] = useState(""); // state check button đang chọn ở filter
+  const [followTickets, setFollowTickets] = useState<TicketType[]>([]); // state check những ticket đang được follow
   const [inProgressTickets, setInProgressTickets] = useState<TicketType[]>([]);
-  const [totalAllTickets, setTotalAllTickets] = useState<number>(0);
   const [totalTicketCompany, setTotalTicketCompany] = useState<number>(0);
   const [totalfollowTickets, setTotalFollowTickets] = useState<number>(0);
-  const [totalOpenTickets, setTotalOpenTickets] = useState<number>(0);
-  const [loadMore, setLoadMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [allTicketsLoaded, setAllTicketsLoaded] = useState(false);
-  const [fetchInit, setFetchInit] = useState(false);
-  const [totalInProgressTickets, setTotalInProgressTickets] =
-    useState<number>(0);
-  const [totalClosedTickets, setTotalClosedTickets] = useState<number>(0);
-  const [totalCancelTickets, setTotalCancelTickets] = useState<number>(0);
-  const [currentTab, setCurrentTab] = useState("tab1");
-  const [currentTabCompany, setCurrentTabCompany] = useState("all");
-  const [tabParent, setTabParent] = useState("forme");
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-  const [screenHeight, setScreenHeight] = useState(window.innerHeight);
+  const [loadingMore, setLoadingMore] = useState(false); // state check loadingmore khi scroll loading
+  const [allTicketsLoaded, setAllTicketsLoaded] = useState(false); // state check nếu allTicketsLoaded thì tắt loading danh sách ticket
+  const [currentTab, setCurrentTab] = useState("tab1"); // state set currentTab ở tab ticket của tôi
+  const [currentTabCompany, setCurrentTabCompany] = useState("all"); // state set currentTab ở tab ticket công ty
+  const [tabParent, setTabParent] = useState("forme"); // state set currentTab là tab của tôi
+  const [offset, setOffset] = useRecoilState(offsetState);
+  const { fetchTickets, configView, setLeftButton, followTicket } =
+    useService(); // import sử dụng các functions ở file common.ts
 
-  const handleWindowResize = () => {
-    setScreenWidth(window.innerWidth);
-    setScreenHeight(window.innerHeight);
-  };
-
-  const configView = async () => {
-    try {
-      await configAppView({
-        headerColor: "#006AF5",
-        headerTextColor: "white",
-        hideAndroidBottomNavigationBar: true,
-        hideIOSSafeAreaBottom: true,
-        actionBar: {
-          title: "My CloudGO",
-          leftButton: "back",
-        },
-      });
-    } catch (error) {}
-  };
-
-  const setLeftButton = async () => {
-    try {
-      await setNavigationBarLeftButton({
-        type: "back",
-      });
-    } catch (error) {
-      // xử lý khi gọi api thất bại
-      console.log(error);
-    }
-  };
-
+  // chạy useEffect này đầu tiên để set lại state và config header
   useEffect(() => {
-    configView();
-    setLeftButton();
+    configView("My CloudGO", "none");
+    setLeftButton("none");
+    fetchTickets("tab1", "", "0", contactData.data?.id, "", []);
+    fetchTickets("all", "", "0", contactData.data?.account_id, "", []);
+
     setGetData(true);
-    window.addEventListener("resize", handleWindowResize);
-    return () => {
-      window.removeEventListener("resize", handleWindowResize);
-    };
   }, [loading, getData]);
 
-  const resFont = (value) => {
-    let fontValue = (value / 360) * screenWidth;
-    return `${fontValue}px`;
-  };
+  /**
+   * hàm gọi api get ticket của tôi khi click theo từng tab
+   * @param tabkey | ticketStatus
+   */
+  const handleTabClick = (tabkey) => {
+    // Thực hiện logic cần thiết trước khi gọi fetchTickets
+    const contactId = contactData.data?.id;
+    let ticketStatus: string[] = [];
+    let starred = "0";
+    switch (tabkey) {
+      case "tab1":
+        ticketStatus = [
+          "Open",
+          "Wait For Response",
+          "Closed",
+          "Customer Confirmed",
+          "Assigned",
+          "Wait For Verifying",
+          "In Progress",
+          "Wait Close",
+          "Testing",
+          "Pending",
+          "Reopen",
+          "Sent Confirm Email",
+        ];
+        starred = "0";
 
-  const resHeight = (value) => {
-    let fontValue = (value / 800) * screenHeight;
-    return `${fontValue}px`;
-  };
+        break;
+      case "tab2":
+        ticketStatus = ["Open"];
+        starred = "1";
+        break;
+      case "tab3":
+        ticketStatus = ["Open"];
+        starred = "0";
+        break;
+      case "tab4":
+        ticketStatus = [
+          "Customer Confirmed",
+          "Assigned",
+          "In Progress",
+          "Wait Close",
+        ];
+        starred = "0";
 
-  const resWidth = (value) => {
-    let fontValue = (value / 360) * screenWidth;
-    return `${fontValue}px`;
-  };
+        break;
+      case "tab5":
+        ticketStatus = ["Closed"];
+        starred = "0";
 
-  const fetchTickets = async (tabKey) => {
-    try {
-      const headers = {
-        "Content-Type": "application/json",
-      };
+        break;
 
-      if (token !== null) {
-        headers["token"] = token;
-      }
-      let ticketStatus: string[] = [];
-      switch (tabKey) {
-        case "tab1":
-          ticketStatus = [
-            "Open",
-            "Wait For Response",
-            "Closed",
-            "Customer Confirmed",
-            "Assigned",
-            "Wait For Verifying",
-            "In Progress",
-            "Wait Close",
-            "Testing",
-            "Pending",
-            "Reopen",
-            "Sent Confirm Email",
-          ];
-          break;
-        case "tab3":
-          ticketStatus = ["Open"];
-          break;
-        case "tab4":
-          ticketStatus = [
-            "Customer Confirmed",
-            "Assigned",
-            "In Progress",
-            "Wait Close",
-          ];
-          break;
-        case "tab5":
-          ticketStatus = ["Closed"];
-          break;
-        case "tab6":
-          ticketStatus = ["Cancel"];
-          break;
-        // Các case khác nếu có
-        default:
-          break;
-      }
+      case "tab6":
+        ticketStatus = ["Cancel"];
+        starred = "0";
 
-      const response = await axios.post(
-        url_api,
-        JSON.stringify({
-          RequestAction: "GetTicketList",
-          Params: {
-            cv_id: "",
-            keyword: "",
-            filters: {
-              category: "",
-              contact_id: contactData.data?.id,
-              ticketstatus: ticketStatus,
-            },
-            paging: {
-              order_by: "",
-              offset: 0,
-              max_results: 100,
-            },
-            ordering: {
-              createdtime: "DESC",
-              priority: "DESC",
-            },
-            filter_by: "all",
-          },
-        }),
-        {
-          headers: headers,
-        }
-      );
-      const json = response.data.data.entry_list;
-
-      setRes(json);
-      setSortedAndFilteredTicketsBackup(json);
-      setIsGetData(true);
-      console.log("danh sách ticket của bạn", json);
-
-      if (!fetchInit) {
-        const followTickets = filterAndSortTickets(json, "tab2");
-        const openTickets = filterAndSortTickets(json, "tab3");
-        const inProgressTickets = filterAndSortTickets(json, "tab4");
-        const closedTickets = filterAndSortTickets(json, "tab5");
-        const cancelTickets = filterAndSortTickets(json, "tab6");
-        setAllTickets(res);
-        setTotalAllTickets(res.length);
-        setTotalTicketCompany(ticketByCompany.length);
-        setTotalFollowTickets(followTickets.length);
-        setTotalOpenTickets(openTickets.length);
-        setTotalInProgressTickets(inProgressTickets.length);
-        setTotalClosedTickets(closedTickets.length);
-        setTotalCancelTickets(cancelTickets.length);
-        console.log("Danh sách ticket của bạn", json.length);
-      }
-
-      setIsRefreshing(false);
-      setLoading(false);
-      switch (tabKey) {
-        case "tab1":
-          setTotalAllTickets(json.length);
-          break;
-        case "tab3":
-          setTotalOpenTickets(json.length);
-          console.log("aaaaa");
-          break;
-        case "tab4":
-          setTotalInProgressTickets(json.length);
-          console.log("bbb");
-
-          break;
-        case "tab5":
-          setClosedTickets(json.length);
-          console.log("ccccccc");
-
-          break;
-        case "tab6":
-          setClosedTickets(json.length);
-          console.log("ddd");
-
-          break;
-        // Các case khác nếu có
-        default:
-          break;
-      }
-      setFetchInit(true);
-
-      return json;
-    } catch (error) {
-      if (error === "SyntaxError: Unexpected token T in JSON at position 0") {
-        navigate("/");
-      } else {
-        console.error(error);
-      }
-    }
-  };
-
-  const TicketByCompany = async (tabKeyCompany) => {
-    try {
-      if (contactData.data?.account_id === "0") {
-        // Nếu account_id là 0, không gọi hàm và làm gì đó khác nếu cần
-        console.log("account_id là 0, không thực hiện gọi TicketByCompany");
-        return; // hoặc return một giá trị khác nếu cần
-      }
-
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      if (token !== null) {
-        headers["token"] = token;
-      }
-
-      let ticketStatus: string[] = [];
-
-      switch (tabKeyCompany) {
-        case "all":
-          ticketStatus = [
-            "Open",
-            "Wait For Response",
-            "Closed",
-            "Wait For Verifying",
-            "Customer Confirmed",
-            "Assigned",
-            "In Progress",
-            "Wait Close",
-            "Testing",
-            "Pending",
-            "Reopen",
-            "Sent Confirm Email",
-          ];
-          break;
-        case "open":
-          ticketStatus = ["Open"];
-          break;
-        case "process":
-          ticketStatus = [
-            "Customer Confirmed",
-            "Assigned",
-            "In Progress",
-            "Wait Close",
-          ];
-          break;
-        case "done":
-          ticketStatus = ["Closed"];
-          break;
-        case "cancel":
-          ticketStatus = ["Cancel"];
-          break;
-        // Các case khác nếu có
-        default:
-          break;
-      }
-      const response = await axios.post(
-        url_api,
-        JSON.stringify({
-          RequestAction: "GetTicketList",
-          Params: {
-            cv_id: "",
-            keyword: "",
-            filters: {
-              category: "",
-              parent_id: contactData.data?.account_id,
-              ticketstatus: ticketStatus,
-            },
-            paging: {
-              order_by: "",
-              offset: 0,
-              max_results: 100,
-            },
-            ordering: {
-              createdtime: "DESC",
-              priority: "DESC",
-            },
-            filter_by: "all",
-          },
-        }),
-        {
-          headers: headers,
-        }
-      );
-
-      const json = response.data.data.entry_list;
-
-      setTicketByCompany(json);
-      console.log("Danh sách ticket của công ty", json);
-      setIsRefreshing(false);
-      setLoading(false);
-      return json;
-    } catch (error) {
-      if (error === "SyntaxError: Unexpected token T in JSON at position 0") {
-        navigate("/");
-      } else {
-        console.error(error);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (loadMore) {
-      setIsLoading(true);
-      setLoadMore(false);
-
-      const newVisibleCount = visibleTicketsCount + 10;
-      if (newVisibleCount >= sortedAndFilteredTickets.length) {
-        setAllTicketsLoaded(true);
-      }
-
-      setVisibleTicketsCount(newVisibleCount);
-      setIsLoading(false);
-    }
-  }, [loadMore, visibleTicketsCount, sortedAndFilteredTickets]);
-
-  const followTicket = (ticketid) => {
-    const headers = {
-      "Content-Type": "application/json",
-    };
-
-    if (token !== null) {
-      headers["token"] = token;
+        break;
+      // Các case khác nếu có
+      default:
+        break;
     }
 
-    axios
-      .post(
-        url_api,
-        JSON.stringify({
-          RequestAction: "SaveStar",
-          Params: {
-            module: "Contacts",
-            id: ticketid,
-            starred: 1,
-          },
-        }),
-        {
-          headers: headers,
-        }
-      )
-      .then((response) => {
-        console.log("Đã theo dõi:", response.data.data);
-        setIsFollowing(true);
-        openSnackbar({
-          text: "Đã theo dõi ticket",
-          type: "success",
-        });
-      })
-      .catch((error) => {
-        console.error("Lỗi khi follow:", error);
-      });
+    // Gọi hàm fetchTickets với các tham số đã xác định
+    fetchTickets(tabkey, "", starred, contactId, "", ticketStatus);
   };
 
-  const unfollowTicket = (ticketid) => {
-    const headers = {
-      "Content-Type": "application/json",
-    };
+  /**
+   * hàm gọi api get ticket của công ty khi click theo từng tab
+   * @param tabKeyCompany | ticketStatus
+   */
+  const handleTicketByCompany = (tabKeyCompany) => {
+    if (contactData.data?.account_id === "0") {
+      // Nếu account_id là 0, không gọi hàm
+      console.log("account_id là 0, không thực hiện gọi TicketByCompany");
+      return;
+    }
+    const account_id = contactData.data?.account_id;
+    let ticketStatus: string[] = [];
 
-    if (token !== null) {
-      headers["token"] = token;
+    switch (tabKeyCompany) {
+      case "all":
+        ticketStatus = [
+          "Open",
+          "Wait For Response",
+          "Closed",
+          "Wait For Verifying",
+          "Customer Confirmed",
+          "Assigned",
+          "In Progress",
+          "Wait Close",
+          "Testing",
+          "Pending",
+          "Reopen",
+          "Sent Confirm Email",
+        ];
+        break;
+      case "open":
+        ticketStatus = ["Open"];
+        break;
+      case "process":
+        ticketStatus = [
+          "Customer Confirmed",
+          "Assigned",
+          "In Progress",
+          "Wait Close",
+        ];
+        break;
+      case "done":
+        ticketStatus = ["Closed"];
+        break;
+      case "cancel":
+        ticketStatus = ["Cancel"];
+        break;
+      // Các case khác nếu có
+      default:
+        break;
     }
 
-    axios
-      .post(
-        url_api,
-        JSON.stringify({
-          RequestAction: "SaveStar",
-          Params: {
-            module: "Contacts",
-            id: ticketid,
-            starred: 0,
-          },
-        }),
-        {
-          headers: headers,
-        }
-      )
-      .then((response) => {
-        console.log("Hủy theo dõi:", response.data.data);
-        setIsFollowing(false);
-        openSnackbar({
-          text: "Đã hủy theo dõi ticket",
-          type: "success",
-        });
-      })
-      .catch((error) => {
-        console.error("Lỗi khi follow:", error);
-      });
+    // Gọi hàm TicketByCompany với các tham số đã xác định
+    fetchTickets(tabKeyCompany, "", "", "", account_id, ticketStatus);
   };
 
-  const handleBeforeUnload = () => {
-    // Xóa dữ liệu từ localStorage
-    localStorage.removeItem("tickets");
-  };
-
-  useEffect(() => {
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, []);
-
-  useEffect(() => {
-    fetchTickets("tab1");
-    TicketByCompany("all");
-  }, []);
-
+  // filter ticket theo date time
   const sortTickets = (sortBy) => {
     let filteredAndSorted = [...sortedAndFilteredTicketsBackup];
-    // setRes(filteredAndSorted);
 
     if (sortBy === "today") {
       const today = new Date();
       const startOfToday = startOfDay(today).getTime();
       const endOfToday = endOfDay(today).getTime();
       setFiltered("today");
-      console.log("hôm nay");
       filteredAndSorted = filteredAndSorted.filter((ticket) => {
         const ticketTime = new Date(ticket.createdtime).getTime();
         return ticketTime >= startOfToday && ticketTime <= endOfToday;
@@ -525,161 +236,36 @@ const TicketsListPage: React.FunctionComponent = () => {
       const startOfMonthDate = startOfMonth(new Date()).getTime();
       const endOfMonthDate = endOfMonth(new Date()).getTime();
       setFiltered("thisMonth");
-      console.log("hôm nay");
 
       filteredAndSorted = filteredAndSorted.filter((ticket) => {
         const ticketTime = new Date(ticket.createdtime).getTime();
         return ticketTime >= startOfMonthDate && ticketTime <= endOfMonthDate;
       });
     }
-    setRes(filteredAndSorted);
-    setTicketByCompany(filteredAndSorted);
-    setFollowTickets(filteredAndSorted);
-    // setTotalTicketCompany(filteredAndSorted);
-    setOpenTickets(filteredAndSorted);
-    setInProgressTickets(filteredAndSorted);
-    setClosedTickets(filteredAndSorted);
-    setCancelTickets(filteredAndSorted);
-    setSortedAndFilteredTickets(filteredAndSorted);
-
-    switch (currentTab) {
-      case "tab1":
-        setTotalAllTickets(filteredAndSorted.length);
-        break;
-      case "tab2":
-        setTotalFollowTickets(filteredAndSorted.length);
-        break;
-      case "tab3":
-        setTotalOpenTickets(filteredAndSorted.length);
-        break;
-      case "tab4":
-        setTotalInProgressTickets(filteredAndSorted.length);
-
-        break;
-      case "tab5":
-        setTotalClosedTickets(filteredAndSorted.length);
-
-        break;
-      case "tab6":
-        setTotalCancelTickets(filteredAndSorted.length);
-
-        break;
-    }
-    console.log(`Danh sách vé đã được sắp xếp theo: ${sortBy}`);
   };
 
-  const updateTickets = () => {
-    const filteredAndSorted = filterAndSortTickets(
-      res.length > sortedAndFilteredTicketsBackup.length
-        ? res
-        : sortedAndFilteredTicketsBackup,
-      currentTab
-    );
-    setSortedAndFilteredTickets(filteredAndSorted);
-    setSortedAndFilteredTicketsBackup(filteredAndSorted);
-    setFilteredTicketsCount(filteredAndSorted.length);
-    // Cập nhật các danh sách vé tương ứng
-    if (currentTab === "tab2") {
-      setFollowTickets(filteredAndSorted);
-    } else if (currentTab === "tab3") {
-      setOpenTickets(filteredAndSorted);
-    } else if (currentTab === "tab4") {
-      setInProgressTickets(filteredAndSorted);
-    } else if (currentTab === "tab5") {
-      setClosedTickets(filteredAndSorted);
-    } else if (currentTab === "tab6") {
-      setCancelTickets(filteredAndSorted);
-    }
-  };
-
-  const filterAndSortTickets = (
-    tickets: TicketType[],
-    status: string
-  ): TicketType[] => {
-    let filtered = tickets.filter((ticket) => {
-      if (status === "tab1") {
-        return true;
-      } else if (status === "tab2") {
-        return ticket.starred === "1";
-      } else if (status === "tab3") {
-        return ["Open", "Reopen", "Wait For Verifying"].includes(ticket.status);
-      } else if (status === "tab4") {
-        return [
-          "In Progress",
-          "Wait Close",
-          "Assigned",
-          "Customer Confirmed",
-          "Sent Confirm Email",
-          "Testing",
-          "Wait For Response",
-          "Pending",
-        ].includes(ticket.status);
-      } else if (status === "tab5") {
-        return ticket.status === "Closed";
-      } else if (status === "tab6") {
-        return ["Cancel", "Reject"].includes(ticket.status);
-      }
-      return false;
-    });
-
-    return filtered;
-  };
-
-  // useEffect(() => {
-  //   const followTickets = filterAndSortTickets(res, "tab2");
-  //   const openTickets = filterAndSortTickets(res, "tab3");
-  //   const inProgressTickets = filterAndSortTickets(res, "tab4");
-  //   const closedTickets = filterAndSortTickets(res, "tab5");
-  //   const cancelTickets = filterAndSortTickets(res, "tab6");
-  //   setAllTickets(res);
-  //   setTotalAllTickets(res.length);
-  //   setTotalTicketCompany(ticketByCompany.length);
-  //   setTotalFollowTickets(followTickets.length);
-  //   setTotalOpenTickets(openTickets.length);
-  //   setTotalInProgressTickets(inProgressTickets.length);
-  //   setTotalClosedTickets(closedTickets.length);
-  //   setTotalCancelTickets(cancelTickets.length);
-
-  //   setFollowTickets(followTickets);
-  //   setOpenTickets(openTickets);
-  //   setInProgressTickets(inProgressTickets);
-  //   setClosedTickets(closedTickets);
-  //   setCancelTickets(cancelTickets);
-  // }, []);
-
-  useEffect(() => {
-    updateTickets();
-  }, [currentTab, sortBy, res]);
-
+  // hàm format date time
   function formatCreatedTime(createdTime) {
     const date = new Date(createdTime);
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
-    // return `${year}-${month}-${day}`;
     return createdTime.substring(0, 11);
   }
 
+  // hàm show more ticket khi scroll
   const handleShowAllTickets = () => {
-    if (!allTicketsLoaded) {
-      setIsLoading(true);
-      setLoadingMore(true);
+    setIsLoading(true);
+    setLoadingMore(true);
 
-      setTimeout(() => {
-        const newVisibleCount = visibleTicketsCount + 10;
-
-        if (newVisibleCount >= sortedAndFilteredTickets.length) {
-          setAllTicketsLoaded(true);
-        }
-
-        setShowAllTickets(true);
-        setVisibleTicketsCount(newVisibleCount);
-        setIsLoading(false);
-        setLoadingMore(false);
-      }, 2000);
-    }
+    setTimeout(() => {
+      fetchTickets("", "", "", contactData.data?.id, "", []);
+      setIsLoading(false);
+      setLoadingMore(false);
+    }, 2000);
   };
 
+  // hàm scroll
   const handleScroll = () => {
     if (
       window.innerHeight + window.scrollY >= document.body.offsetHeight &&
@@ -689,47 +275,47 @@ const TicketsListPage: React.FunctionComponent = () => {
     }
   };
 
+  // hàm Reload lại api get ticket
   const handleReload = () => {
-    localStorage.removeItem("tickets");
-    localStorage.removeItem("newsData");
-    console.log("reload");
-    setFiltering(false);
-
-    fetchTickets([]);
+    fetchTickets("", "", "", contactData.data?.id, "", []);
+    fetchTickets("", "", "", "", contactData.data?.account_id, []);
   };
 
+  // hàm reFresh app
   const handleRefresh = async () => {
     setIsRefreshing(true);
     setLoading(true);
-    handleReload();
+    setTimeout(() => {
+      handleReload();
+      setIsRefreshing(false);
+      setLoading(false);
+    }, 1500);
   };
 
-  // useEffect(() => {
-  //   // Your existing code for configView and event listener
-
-  //   // Run loading logic only once when the component mounts
-  //   setLoading(true);
-  //   setIsLoading(false); // Set isLoading to false after initial loading
-  //   handleRefresh(); // Optionally, you can call your loading logic here
-  // }, []);
-
+  /**
+   * hàm truyền value khi click vào button trong filter
+   * @param buttonName : today | thisWeek | thisMonth
+   */
   const handleCustomDateClick = (buttonName) => {
     setCustomDateVisible(true);
     setSelectedButton(buttonName);
   };
 
+  /**
+   * hàm filter ticket theo dạng custom date
+   */
   const handleOtherButtonClick = (buttonValue) => {
     sortTickets(buttonValue);
     setSelectedButton(buttonValue);
     setSheetVisible(false);
     setCustomDateVisible(false);
     setLoadingFilter(true);
-    setFiltering(true);
     setTimeout(() => {
       setLoadingFilter(false);
     }, 1500);
   };
 
+  // hàm filter theo custom date từ DD/MM/YY => DD/MM/YY
   const handlePickder = () => {
     const filteredTickets = sortedAndFilteredTicketsBackup.filter((ticket) => {
       const ticketTime = new Date(ticket.createdtime).getTime();
@@ -738,34 +324,15 @@ const TicketsListPage: React.FunctionComponent = () => {
             ticketTime <= endOfDay(endDate).getTime()
         : true;
     });
-    console.log("Ticket sau khi filter:", filteredTickets);
-
-    // Cập nhật số lượng ticket đã lọc
-    setFilteredTicketsCount(filteredTickets.length);
-    setTotalTicketCompany(ticketByCompany.length);
-    setTotalFollowTickets(followTickets.length);
-    setTotalOpenTickets(openTickets.length);
-    setTotalInProgressTickets(inProgressTickets.length);
-    setTotalClosedTickets(closedTickets.length);
-    setTotalCancelTickets(cancelTickets.length);
-    console.log("Số lượng ticket sau khi filter:", filteredTickets.length);
-    setRes(filteredTickets);
-    setFollowTickets(filteredTickets);
-    setOpenTickets(filteredTickets);
-    setInProgressTickets(filteredTickets);
-    setClosedTickets(filteredTickets);
-    setCancelTickets(filteredTickets);
-    setSortedAndFilteredTickets(filteredTickets);
-    setTicketByCompany(filteredTickets);
   };
 
-  const handleConfirmButtonClick = () => {
+  // hàm confirm filter khi filter theo dạng custom date
+  const handleConfirmButtonFilter = () => {
     // Kiểm tra xem startDate và endDate có tồn tại
     if (startDate && endDate) {
       handlePickder();
-      setCustomDateVisible(false); // Đặt false thay vì true
+      setCustomDateVisible(false);
       setLoadingFilter(true);
-      setFiltering(true);
       setSheetVisible(false);
       setCustomDateVisible(false);
       setTimeout(() => {
@@ -778,30 +345,10 @@ const TicketsListPage: React.FunctionComponent = () => {
   };
 
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [allTicketsLoaded, loadingMore]);
-
-  const handleScrollAndReload = () => {
-    handleScroll();
-  };
-
-  // useEffect(() => {
-  //   // Run loading logic only once when the component mounts
-  //   if (!isLoading) {
-  //     handleRefresh();
-  //     setIsLoading(true); // Set isLoading to true to prevent reloading on subsequent renders
-  //   }
-  // }, []);
-
-  useEffect(() => {
-    // Simulate an asynchronous operation
     const delay = setTimeout(() => {
       setIsLoading(false);
       clearTimeout(delay);
-    }, 3000);
+    }, 2000);
 
     // Cleanup function
     return () => clearTimeout(delay);
@@ -840,7 +387,7 @@ const TicketsListPage: React.FunctionComponent = () => {
         hideScrollbar={true}
         restoreScrollOnBack={false}
         className="section-page"
-        onScroll={handleScrollAndReload}
+        onScroll={handleScroll}
       >
         {loading && (
           <Box
@@ -916,16 +463,14 @@ const TicketsListPage: React.FunctionComponent = () => {
                   style={{
                     border: "1px rgba(185, 189, 193, 1) solid ",
                     width: "98%",
-                    height: resHeight(40),
+                    height: "40px",
                     borderRadius: "4px",
                   }}
                   type="text"
                   placeholder="Tìm ticket theo tên, mã, trạng thái"
-                  value={searchText}
                   onClick={() => {
-                    navigate(`/tickets/search?q=${searchText}`);
+                    navigate(`/tickets/search`);
                   }}
-                  onChange={(e) => setSearchText(e.target.value)}
                 />
               </Box>
 
@@ -937,7 +482,6 @@ const TicketsListPage: React.FunctionComponent = () => {
                   justifyContent: "center",
                 }}
                 onClick={() => {
-                  setActionSheetVisible(true);
                   setSheetVisible(true);
                 }}
               >
@@ -1046,7 +590,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   <Button
                     size="small"
                     style={{ marginTop: "8px" }}
-                    onClick={handleConfirmButtonClick}
+                    onClick={handleConfirmButtonFilter}
                   >
                     Chọn
                   </Button>
@@ -1059,7 +603,7 @@ const TicketsListPage: React.FunctionComponent = () => {
               defaultActiveKey="tab1"
               onTabClick={(tabKey) => {
                 setCurrentTab(tabKey);
-                fetchTickets(tabKey);
+                handleTabClick(tabKey);
               }}
               scrollable={true}
             >
@@ -1077,12 +621,16 @@ const TicketsListPage: React.FunctionComponent = () => {
                     }}
                   >
                     {currentTab === "tab1" ? `Tất cả` : "Tất cả"} (
-                    {totalAllTickets > 99 ? "99+" : totalAllTickets})
+                    {allTickets.paging.total_count > 99
+                      ? "99+"
+                      : allTickets.paging.total_count}
+                    )
                   </Text>
                 }
                 style={{ flex: 1 }}
               >
-                {sortedAndFilteredTickets.length === 0 || res.length == 0 ? (
+                {allTickets.paging.total_count === 0 ||
+                allTickets.paging.total_count == 0 ? (
                   // Component hiển thị ticket đang trống
                   <TicketEmpty />
                 ) : loadingFilter ? (
@@ -1095,21 +643,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  res
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setRes}
-                      />
-                    ))
+                  allTickets.entry_list.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setRes}
+                    />
+                  ))
                 )}
                 {isLoading && !allTicketsLoaded && (
                   <Box className="center-spinner">
@@ -1137,12 +683,15 @@ const TicketsListPage: React.FunctionComponent = () => {
                     }}
                   >
                     {currentTab === "tab2" ? `Theo dõi` : "Theo dõi"} (
-                    {totalfollowTickets > 99 ? "99+" : totalfollowTickets})
+                    {followTicketMe.paging.total_count > 99
+                      ? "99+"
+                      : followTicketMe.paging.total_count}
+                    )
                   </Text>
                 }
                 style={{ flex: 1 }}
               >
-                {followTickets.length === 0 ? (
+                {followTicketMe.paging.total_count === 0 ? (
                   // Component hiển thị ticket đang trống
                   <TicketEmpty />
                 ) : loadingFilter ? (
@@ -1155,7 +704,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  res.map((ticket) => (
+                  followTicketMe.entry_list.map((ticket) => (
                     <TicketItem
                       key={ticket.ticketid}
                       ticket={ticket}
@@ -1196,12 +745,15 @@ const TicketsListPage: React.FunctionComponent = () => {
                     }}
                   >
                     {currentTab === "tab3" ? `Mới` : "Mới"} (
-                    {totalOpenTickets > 99 ? "99+" : totalOpenTickets})
+                    {openTicketsMe.paging.total_count > 99
+                      ? "99+"
+                      : openTicketsMe.paging.total_count}
+                    )
                   </Text>
                 }
                 style={{ flex: 1 }}
               >
-                {openTickets.length === 0 ? (
+                {openTicketsMe.entry_list.length === 0 ? (
                   // Component hiển thị ticket đang trống
                   <TicketEmpty />
                 ) : loadingFilter ? (
@@ -1214,21 +766,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  res
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setRes}
-                      />
-                    ))
+                  openTicketsMe?.entry_list.map((ticket) => (
+                    <TicketItem
+                      key={ticket?.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setRes}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1257,15 +807,15 @@ const TicketsListPage: React.FunctionComponent = () => {
                     }}
                   >
                     {currentTab === "tab4" ? `Đang xử lý` : "Đang xử lý"} (
-                    {totalInProgressTickets > 99
+                    {processTicketsMe.paging.total_count > 99
                       ? "99+"
-                      : totalInProgressTickets}
+                      : processTicketsMe.paging.total_count}
                     )
                   </Text>
                 }
                 style={{ flex: 1 }}
               >
-                {inProgressTickets.length === 0 ? (
+                {processTicketsMe.paging.total_count === 0 ? (
                   // Component hiển thị ticket đang trống
                   <TicketEmpty />
                 ) : loadingFilter ? (
@@ -1278,21 +828,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  res
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setRes}
-                      />
-                    ))
+                  processTicketsMe.entry_list.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setRes}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1321,12 +869,15 @@ const TicketsListPage: React.FunctionComponent = () => {
                     }}
                   >
                     {currentTab === "tab5" ? `Hoàn thành` : "Hoàn thành"} (
-                    {totalClosedTickets > 99 ? "99+" : totalClosedTickets})
+                    {closedTicketsMe.paging.total_count > 99
+                      ? "99+"
+                      : closedTicketsMe.paging.total_count}
+                    )
                   </Text>
                 }
                 style={{ flex: 1 }}
               >
-                {closedTickets.length === 0 ? (
+                {closedTicketsMe.paging.total_count === 0 ? (
                   // Component hiển thị ticket đang trống
                   <TicketEmpty />
                 ) : loadingFilter ? (
@@ -1339,21 +890,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  res
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setRes}
-                      />
-                    ))
+                  closedTicketsMe.entry_list.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setRes}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1382,12 +931,15 @@ const TicketsListPage: React.FunctionComponent = () => {
                     }}
                   >
                     {currentTab === "tab6" ? `Hủy` : "Hủy"} (
-                    {totalCancelTickets > 99 ? "99+" : totalCancelTickets})
+                    {cancelTicketsMe.paging.total_count > 99
+                      ? "99+"
+                      : cancelTicketsMe.paging.total_count}
+                    )
                   </Text>
                 }
                 style={{ flex: 1 }}
               >
-                {cancelTickets.length === 0 ? (
+                {cancelTicketsMe.paging.total_count === 0 ? (
                   // Component hiển thị ticket đang trống
                   <TicketEmpty />
                 ) : loadingFilter ? (
@@ -1400,21 +952,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  res
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setRes}
-                      />
-                    ))
+                  cancelTicketsMe.entry_list.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setRes}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1476,16 +1026,14 @@ const TicketsListPage: React.FunctionComponent = () => {
                   style={{
                     border: "1px rgba(185, 189, 193, 1) solid ",
                     width: "98%",
-                    height: resHeight(40),
+                    height: "40px",
                     borderRadius: "4px",
                   }}
                   type="text"
                   placeholder="Tìm ticket theo tên, mã, trạng thái"
-                  value={searchText}
                   onClick={() => {
-                    navigate(`/tickets/search?q=${searchText}`);
+                    navigate(`/tickets/search`);
                   }}
-                  onChange={(e) => setSearchText(e.target.value)}
                 />
               </Box>
 
@@ -1497,7 +1045,6 @@ const TicketsListPage: React.FunctionComponent = () => {
                   justifyContent: "center",
                 }}
                 onClick={() => {
-                  setActionSheetVisible(true);
                   setSheetVisible(true);
                 }}
               >
@@ -1505,9 +1052,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   size={24}
                   icon={"zi-filter"}
                   style={{
-                    color: filtering
-                      ? "rgba(18, 144, 255, 1)"
-                      : "rgba(118, 122, 127, 1)",
+                    color: "rgba(118, 122, 127, 1)",
                   }}
                 />
               </Box>
@@ -1608,7 +1153,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                   <Button
                     size="small"
                     style={{ marginTop: "8px" }}
-                    onClick={handleConfirmButtonClick}
+                    onClick={handleConfirmButtonFilter}
                   >
                     Chọn
                   </Button>
@@ -1621,8 +1166,7 @@ const TicketsListPage: React.FunctionComponent = () => {
               defaultActiveKey="all"
               onTabClick={(tabKeyCompany) => {
                 setCurrentTabCompany(tabKeyCompany);
-                console.log("aa", tabKeyCompany);
-                TicketByCompany(tabKeyCompany);
+                handleTicketByCompany(tabKeyCompany);
               }}
               scrollable={true}
             >
@@ -1681,21 +1225,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  ticketByCompany
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setTicketByCompany}
-                      />
-                    ))
+                  ticketByCompany.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setTicketByCompany}
+                    />
+                  ))
                 )}
                 {isLoading && !allTicketsLoaded && (
                   <Box className="center-spinner">
@@ -1746,7 +1288,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                 ) : (
                   ticketByCompany
                     .filter((ticket) => ticket.starred === "1")
-                    .slice(0, visibleTicketsCount)
+
                     .map((ticket) => (
                       <TicketItem
                         key={ticket.ticketid}
@@ -1807,21 +1349,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  ticketByCompany
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setTicketByCompany}
-                      />
-                    ))
+                  ticketByCompany.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setTicketByCompany}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1871,21 +1411,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  ticketByCompany
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setTicketByCompany}
-                      />
-                    ))
+                  ticketByCompany.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setTicketByCompany}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1933,21 +1471,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  ticketByCompany
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setTicketByCompany}
-                      />
-                    ))
+                  ticketByCompany.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setTicketByCompany}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (
@@ -1993,21 +1529,19 @@ const TicketsListPage: React.FunctionComponent = () => {
                     />
                   </Box>
                 ) : (
-                  ticketByCompany
-                    .slice(0, visibleTicketsCount)
-                    .map((ticket) => (
-                      <TicketItem
-                        key={ticket.ticketid}
-                        ticket={ticket}
-                        translationStatus={translationStatus}
-                        statusColors={statusColors}
-                        statusTextColors={statusTextColors}
-                        formatCreatedTime={formatCreatedTime}
-                        navigate={navigate}
-                        followTicket={followTicket}
-                        setRes={setTicketByCompany}
-                      />
-                    ))
+                  ticketByCompany.map((ticket) => (
+                    <TicketItem
+                      key={ticket.ticketid}
+                      ticket={ticket}
+                      translationStatus={translationStatus}
+                      statusColors={statusColors}
+                      statusTextColors={statusTextColors}
+                      formatCreatedTime={formatCreatedTime}
+                      navigate={navigate}
+                      followTicket={followTicket}
+                      setRes={setTicketByCompany}
+                    />
+                  ))
                 )}
 
                 {isLoading && !allTicketsLoaded && (

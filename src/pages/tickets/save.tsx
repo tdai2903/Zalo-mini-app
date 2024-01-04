@@ -15,7 +15,7 @@ import {
   useSnackbar,
 } from "zmp-ui";
 import { TicketType } from "../../type";
-import url_api from "../../service";
+import { url_api } from "../../const";
 import { useService } from "../../functions/common";
 const initialTicketState: TicketType = {
   ticket_title: "",
@@ -46,11 +46,11 @@ const initialTicketState: TicketType = {
   description: "",
   url: "",
   helpdesk_subcategory: "",
-};
+}; // initState create new ticket
 const CreateTicketPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { state } = location;
+  const navigate = useNavigate(); //navigation
+  const location = useLocation(); //state từ location
+  const { state } = location; // sử dụng state từ location
   const {
     ticket_title,
     ticketcategories,
@@ -63,15 +63,14 @@ const CreateTicketPage = () => {
     description,
     url,
     imagename_path,
-  } = state ?? [];
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const contactData = JSON.parse(localStorage.getItem("contact") || "{}");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const { openSnackbar, closeSnackbar } = useSnackbar();
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const token = localStorage.getItem("token");
-  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
+  } = state ?? []; // khai báo state từ state location
+  const fileInputRef = useRef<HTMLInputElement | null>(null); // tham chiếu đến file upload
+  const [selectedImages, setSelectedImages] = useState<File[]>([]); // state khi upload là image
+  const contactData = JSON.parse(localStorage.getItem("profile") || "{}"); // sử dụng profile từ localStorage
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]); // state khi upload là file
+  const { openSnackbar, closeSnackbar } = useSnackbar(); // alert hiển thị khi tương tác
+  const token = localStorage.getItem("token"); // sử dụng token crm từ localStorage
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}"); // sử dụng userInfo từ localStorage
   const [subcategoryOptions, setSubcategoryOptions] = useState([]);
   const [modalConfirmTicket, setModalConfirmTicket] = useState(false);
   const [isFieldsFilled, setIsFieldsFilled] = useState<string | boolean>("");
@@ -249,7 +248,7 @@ const CreateTicketPage = () => {
   const handleImageUpload = (files: FileList | null) => {
     if (files) {
       const selectedImagesArray = Array.from(files);
-
+      console.log("file upload", files);
       // Kiểm tra kích thước của từng tệp trước khi thêm vào danh sách
       const filesWithinSizeLimit = selectedImagesArray.every(
         (file) => file.size <= maxFileSizeInBytes
@@ -290,7 +289,7 @@ const CreateTicketPage = () => {
     const updatedImages = [...selectedImages];
     updatedImages.splice(index, 1);
     setSelectedImages(updatedImages);
-
+    console.log("delete file", updatedImages);
     // update lại danh sách file đã upload
     const updatedUploadedFiles = [...uploadedFiles];
     updatedUploadedFiles.splice(index, 1);
@@ -320,6 +319,7 @@ const CreateTicketPage = () => {
     // update lại file khi upload
     const updatedFiles = [...uploadedFiles];
     const deletedFile = updatedFiles.splice(index, 1)[0];
+    console.log("delete file", deletedFile);
 
     if (isImage(deletedFile)) {
       // Nếu là hình ảnh, chỉ cập nhật danh sách hình ảnh
@@ -400,7 +400,6 @@ const CreateTicketPage = () => {
 
   // Hàm select danh mục
   const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
     setNewTicket((prevTicket) => ({
       ...prevTicket,
       ticketcategories: value,
@@ -807,6 +806,17 @@ const CreateTicketPage = () => {
               />
             </Box>
             <Box mt={3}>
+              <Text>Email</Text>
+              <Input
+                type="text"
+                placeholder="Vui lòng nhập email"
+                value={newTicket.contact_email}
+                onChange={inputEmail}
+                status={isFormInvalid && !emailValidationResult ? "error" : ""}
+                errorText={errorMessages.email}
+              />
+            </Box>
+            <Box mt={3}>
               <Text>Di động</Text>
               <Input
                 style={{
@@ -828,17 +838,6 @@ const CreateTicketPage = () => {
                 type="text"
                 disabled
                 defaultValue={contactData.data?.account_name}
-              />
-            </Box>
-            <Box mt={3}>
-              <Text>Email</Text>
-              <Input
-                type="text"
-                placeholder="Vui lòng nhập email"
-                value={newTicket.contact_email}
-                onChange={inputEmail}
-                status={isFormInvalid && !emailValidationResult ? "error" : ""}
-                errorText={errorMessages.email}
               />
             </Box>
           </Box>

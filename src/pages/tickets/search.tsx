@@ -15,6 +15,8 @@ const SearchPage: React.FunctionComponent = () => {
   const profile = JSON.parse(localStorage.getItem("profile") || "{}"); // lấy profile từ local storage
   const { configView, fetchTickets } = useService();
 
+  const test = 21;
+
   //Format date time
   function formatCreatedTime(createdTime) {
     const date = new Date(createdTime);

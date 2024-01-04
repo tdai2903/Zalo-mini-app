@@ -14,6 +14,8 @@ import {
   ImageViewer,
   useSnackbar,
 } from "zmp-ui";
+import imgDOC from "/assets-src/doc.png";
+import imgPDF from "/assets-src/imgpdf.png";
 import { TicketType } from "../../type";
 import { url_api } from "../../const";
 import { useService } from "../../functions/common";
@@ -349,9 +351,9 @@ const CreateTicketPage = () => {
   // check nếu là file pdf || docx thì hiển thị img tương tự
   const getFileIcon = (fileName) => {
     if (fileName.endsWith(".docx")) {
-      return "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/.docx_icon.svg/2048px-.docx_icon.svg.png";
+      return imgDOC;
     } else if (fileName.endsWith(".pdf")) {
-      return "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pdf-2127829.png/600px-Pdf-2127829.png";
+      return imgPDF;
     } else {
       // Nếu không phải là file pdf hoặc docx, trả về null hoặc ảnh mặc định khác
       return null;
@@ -664,7 +666,7 @@ const CreateTicketPage = () => {
                             src={
                               image instanceof File
                                 ? URL.createObjectURL(image)
-                                : `https://pms-dev.cloudpro.vn/${image}`
+                                : `${url_api}${image}`
                             }
                             alt={`Hình ảnh ${index}`}
                             style={{

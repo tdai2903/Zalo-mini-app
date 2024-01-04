@@ -12,6 +12,10 @@ import {
   Avatar,
   Sheet,
 } from "zmp-ui";
+import imgDOC from "/assets-src/doc.png";
+import imgPDF from "/assets-src/imgpdf.png";
+import img_share from "/assets-src/img_share.png";
+import img_warning from "/assets-src/Warning.png";
 import { getSystemInfo, openOutApp } from "zmp-sdk";
 import { openShareSheet, openWebview } from "zmp-sdk/apis";
 import { url_api, site_pms, site_cloudwork } from "../../../const";
@@ -264,8 +268,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
         data: {
           title: "My Zalo Mini App - My Account",
           description: description,
-          thumbnail:
-            "https://images.glints.com/unsafe/glints-dashboard.s3.amazonaws.com/company-logo/7dfb852dfdf250030688f757f4f168bf.png",
+          thumbnail: img_share,
           path: `${location.pathname}${location.search}`,
         },
       });
@@ -1425,8 +1428,8 @@ const DetailTicketPage: React.FunctionComponent = () => {
                                     }
                                     src={
                                       imagePath.endsWith(".docx")
-                                        ? "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/.docx_icon.svg/2048px-.docx_icon.svg.png"
-                                        : "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pdf-2127829.png/600px-Pdf-2127829.png"
+                                        ? imgDOC
+                                        : imgPDF
                                     }
                                     alt={`File ${index + 1}`}
                                   />
@@ -2082,8 +2085,8 @@ const DetailTicketPage: React.FunctionComponent = () => {
                                       <img
                                         src={
                                           file.name.endsWith(".docx")
-                                            ? "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/.docx_icon.svg/2048px-.docx_icon.svg.png"
-                                            : "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pdf-2127829.png/600px-Pdf-2127829.png"
+                                            ? imgDOC
+                                            : imgPDF
                                         }
                                         alt={`File Icon`}
                                         onClick={() =>
@@ -2256,8 +2259,8 @@ const DetailTicketPage: React.FunctionComponent = () => {
                                     <img
                                       src={
                                         file.name.endsWith(".docx")
-                                          ? "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/.docx_icon.svg/2048px-.docx_icon.svg.png"
-                                          : "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pdf-2127829.png/600px-Pdf-2127829.png"
+                                          ? imgDOC
+                                          : imgPDF
                                       }
                                       alt={`File Icon`}
                                       style={{
@@ -2319,8 +2322,8 @@ const DetailTicketPage: React.FunctionComponent = () => {
                                             <img
                                               src={
                                                 file.name.endsWith(".docx")
-                                                  ? "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/.docx_icon.svg/2048px-.docx_icon.svg.png"
-                                                  : "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Pdf-2127829.png/600px-Pdf-2127829.png"
+                                                  ? imgDOC
+                                                  : imgPDF
                                               }
                                               alt={`File Icon`}
                                               onClick={() =>
@@ -2815,7 +2818,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
                 display: "block",
                 margin: "0 auto",
               }}
-              src="https://clipart-library.com/images/gTe5bLznc.gif"
+              src={img_warning}
             />
             <Text
               style={{
@@ -2887,7 +2890,7 @@ const DetailTicketPage: React.FunctionComponent = () => {
                 display: "block",
                 margin: "0 auto",
               }}
-              src="https://clipart-library.com/images/gTe5bLznc.gif"
+              src={img_warning}
             />
             <Text
               style={{

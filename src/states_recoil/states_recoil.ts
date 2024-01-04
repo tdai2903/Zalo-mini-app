@@ -10,22 +10,7 @@ export const resState = atom({
 
 export const resCompanyState = atom({
   key: "resCompanyState",
-  default: [],
-});
-
-export const notiState = atom({
-  key: "notiState",
-  default: [],
-});
-
-export const getNoti = atom({
-  key: "getNoti",
-  default: false,
-});
-
-export const ticketListState = atom({
-  key: "ticketListState",
-  default: false,
+  default: { entry_list: <TicketType[]>[], paging: { total_count: 0 } },
 });
 
 export const offsetState = atom({
@@ -45,11 +30,6 @@ export const userInfoState = atom({
     name: "",
     avatar: "",
   },
-});
-
-export const getNewsState = atom({
-  key: "getNews",
-  default: [],
 });
 
 export const loadingState = atom({

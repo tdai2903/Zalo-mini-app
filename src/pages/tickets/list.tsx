@@ -12,6 +12,7 @@ import {
   DatePicker,
 } from "zmp-ui";
 import { TicketType } from "../../type";
+import imgEmpty from "/assets-src/ticketEmpty.png";
 import {
   startOfDay,
   endOfDay,
@@ -33,14 +34,12 @@ import {
   openTicketState,
   processTicketState,
   resState,
-  ticketListState,
 } from "../../states_recoil/states_recoil";
 import TicketItem from "../../components/ticket";
 import TicketEmpty from "../../components/ticket_empty";
 import { useService } from "../../functions/common";
 const TicketsListPage: React.FunctionComponent = () => {
   const navigate = useNavigate();
-  const [getData, setGetData] = useRecoilState(ticketListState); // global state check list data
   const [allTickets, setAllTickets] = useRecoilState(allTicketState); // global state tất cả ticket
   const [followTicketMe, setFollowTicketMe] = useRecoilState(followTicketState);
   const [openTicketsMe, setOpenTicketsMe] = useRecoilState(openTicketState); // global state ticket có status = Open
@@ -84,9 +83,7 @@ const TicketsListPage: React.FunctionComponent = () => {
     setLeftButton("none");
     fetchTickets("tab1", "", "0", contactData.data?.id, "", []);
     fetchTickets("all", "", "0", contactData.data?.account_id, "", []);
-
-    setGetData(true);
-  }, [loading, getData]);
+  }, [loading]);
 
   /**
    * hàm gọi api get ticket của tôi khi click theo từng tab
@@ -1199,7 +1196,7 @@ const TicketsListPage: React.FunctionComponent = () => {
                 {ticketByCompany.length === 0 ? (
                   <Box mt={5} style={{ textAlign: "center" }}>
                     <img
-                      src="https://cdn-icons-png.flaticon.com/128/4076/4076419.png"
+                      src={imgEmpty}
                       alt="iconticket"
                       style={{
                         height: "80px",

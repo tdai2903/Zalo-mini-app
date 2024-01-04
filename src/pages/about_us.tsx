@@ -3,6 +3,7 @@ import { Box, Icon, Page, Text } from "zmp-ui";
 import { openWebview } from "zmp-sdk/apis";
 import { openPhone } from "zmp-sdk/apis";
 import { useService } from "../functions/common";
+import img_share from "/assets-src/img_share.png";
 const AboutUsPage: React.FunctionComponent = () => {
   const { configView, setLeftButton } = useService();
 
@@ -73,11 +74,7 @@ const AboutUsPage: React.FunctionComponent = () => {
           height: "200px",
         }}
       >
-        <img
-          style={{ width: "300px" }}
-          alt="Hình ảnh"
-          src="https://tel4vn.edu.vn/uploads/2023/07/CloudGO-logo-vertical.png"
-        />
+        <img style={{ width: "300px" }} alt="Hình ảnh" src={img_share} />
       </Box>
 
       <Box>
